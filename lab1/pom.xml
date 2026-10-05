@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>happiness-calculator</artifactId>
+    <version>1.1.0</version>
+    <packaging>jar</packaging>
+
+    <name>Калькулятор счастья</name>
+    <description>Приложение «Калькулятор счастья»: расчёт индекса счастья по сну, кофе, приятному общению и работе за сутки и по выходным за неделю. Проверка ввода (только цифры) и контроль суммы не более 24 часов в сутки. Каркас MVC с активной моделью, GUI на Swing.</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Версия Java. Если в IntelliJ IDEA стоит старый JDK (например, 8 или 11),
+             поменяйте 17 на нужную — код совместим и с Java 8. -->
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <!-- Прописываем Main-Class в MANIFEST.MF, чтобы jar запускался двойным кликом / через java -jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.example.happiness.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

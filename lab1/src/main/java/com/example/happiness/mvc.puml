@@ -1,0 +1,57 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Main
+class HappinessController {
+  - model : HappinessModel
+  - mainFrame : MainFrame
+  + onInputButtonClicked() : void
+  + {static} parseInput(...) : HappinessData
+}
+class MainFrame {
+  + propertyChange(evt) : void
+}
+class InputDialog {
+  + restore(data : HappinessData) : void
+  + restoreRaw(...) : void
+}
+class NumericDocumentFilter
+class HappinessModel {
+  - data : HappinessData
+  - result : HappinessResult
+  + setData(newData) : void
+  + {static} calculate(d) : HappinessResult
+}
+class HappinessData <<immutable>>
+class HappinessResult <<immutable>>
+interface PropertyChangeListener
+
+' Точка входа
+Main ..> HappinessModel : создаёт
+Main ..> MainFrame : создаёт
+Main ..> HappinessController : создаёт
+
+' Контроллер
+HappinessController -right-> HappinessModel : setData()
+HappinessController --> MainFrame : хранит ссылку
+HappinessController ..> InputDialog : создаёт
+HappinessController ..> HappinessData : parseInput()
+
+' Представление
+MainFrame ..|> PropertyChangeListener
+MainFrame ..> HappinessModel : наблюдает
+InputDialog ..> NumericDocumentFilter : создаёт
+InputDialog ..> HappinessData : restore()
+
+' Модель
+HappinessModel o-- HappinessData : data
+HappinessModel o-- HappinessResult : result
+HappinessModel ..> HappinessResult : calculate()
+
+note right of HappinessModel
+  Активная модель:
+  сама оповещает подписчиков
+  через PropertyChangeSupport
+end note
+
+@enduml
