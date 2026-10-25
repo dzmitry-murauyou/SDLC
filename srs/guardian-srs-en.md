@@ -68,16 +68,17 @@ Guardian (release 1.0) is a password manager intended to create and securely sto
 
 ### 1.4 References
 
-| Source | Version / Date | Status and Application |
-|---|---|---|
-| `srs/srs-template-en.md` in this repository | Current repository version | Informative: structure and guidance for preparing an SRS. |
-| RFC 6238, TOTP: Time-Based One-Time Password Algorithm | 2011 | Informative; applicable to TOTP code generation if this feature is confirmed for the release. |
-| OWASP Application Security Verification Standard (ASVS) | Version to be fixed during development | Informative security-verification reference; this SRS does not claim compliance. |
-| Java documentation and the selected supported JDK release | Release not yet selected | Normative after the project fixes the target JDK. |
+| Title | Owner | Version / Date | Location | Status and Application |
+|---|---|---|---|---|
+| SRS template | Project repository | Repository version as of 2026-10-26 | `srs/srs-template-en.md` | Informative: structure and preparation guidance. |
+| RFC 6238, TOTP: Time-Based One-Time Password Algorithm | IETF | RFC 6238, 2011-05 | https://www.rfc-editor.org/rfc/rfc6238 | Normative for TOTP generation compatibility and test vectors. |
+| OWASP Application Security Verification Standard (ASVS) | OWASP Foundation | 5.0.0, 2025 | https://owasp.org/www-project-application-security-verification-standard/ | Informative security checklist; Guardian compliance is not claimed pending a separate assessment. |
+| ISO/IEC/IEEE 29148, Systems and software engineering — Requirements engineering | ISO / IEC / IEEE | 29148:2018 | `docs/standards.md` | Informative requirements-engineering reference; formal conformance is not claimed. |
+| Java Platform, Standard Edition Documentation | Oracle / OpenJDK | Target JDK release and documentation date to be fixed after release selection | https://docs.oracle.com/en/java/javase/ | Normative after the supported JDK is approved. |
 
 ### 1.5 Document Overview
 
-Section 2 describes Guardian’s context, users, constraints, and assumptions. Section 3 contains verifiable requirements for interfaces, functions, quality, compliance, and implementation; Section 4 maps each requirement to a verification method. Section 5 records additional decisions, open questions, and limitations of this draft. Requirements use unique identifiers in the form `REQ-[AREA]-[NNN]`, and changes to the specification are recorded in the revision history.
+Section 2 defines the product context, user classes, constraints, assumptions, and release allocation. Section 3 contains interface, functional, quality, and implementation requirements; mandatory statements use “shall,” and each requirement has a unique ID and acceptance criteria. Section 4 maps requirements to verification methods and artifacts, while Section 5 records open questions and draft limitations. Changes are approved by the product owner and, where applicable, the security specialist, and are recorded in the revision history.
 
 ---
 
@@ -85,7 +86,7 @@ Section 2 describes Guardian’s context, users, constraints, and assumptions. S
 
 ### 2.1 Product Perspective
 
-Guardian is a new standalone product for an individual user, replacing password storage in notes, browser forms, or spreadsheets. Its primary asset is a local store of secrets; the autofill interface interacts with supported browsers or applications depending on the selected platform. An external account or synchronization service is outside the scope of version 1.0. The product owner, support model, target platforms, and SLA requirements have not yet been defined.
+Guardian is a new standalone product for an individual user, replacing password storage in notes, browser forms, or spreadsheets. Data is held in a local encrypted vault; autofill interacts only with a browser or application explicitly selected and supported for the release. External account and synchronization services are outside the scope of version 1.0. A product owner and support team must be assigned before release; a network SLA does not apply to the offline application, and support is limited to documentation and diagnostics without support-staff access to secrets.
 
 ```text
 User ──> Guardian (interface, encrypted vault, generator, TOTP)
@@ -127,25 +128,28 @@ The first release interface and documentation must be available in Russian; the 
 
 ### 2.5 Assumptions and Dependencies
 
-| ID | Assumption / Dependency | If False |
-|---|---|---|
-| A-01 | The first release serves one user and one local vault, without cloud synchronization. | Server architecture, account management, synchronization, conflict resolution, and a separate threat model will be required. |
-| A-02 | The user keeps the master password separately and understands that losing it may make the data impossible to decrypt. | A separately designed recovery process will be needed, increasing abuse risks. |
-| A-03 | The user runs Guardian on a supported, uncompromised device. | The application cannot guarantee protection against malware, keyloggers, or physical access to an unlocked device. |
-| A-04 | Specific browsers/operating systems with available APIs will be selected for autofill. | Interface, security, and testing requirements must be revised. |
-| A-05 | Cryptography and random-number-generation libraries will be available for the selected Java runtime and will pass license and security reviews. | The target platform or feature set may need to change; custom cryptography is not permitted without separate justification. |
-| A-06 | The built-in two-factor feature means storing a website’s TOTP secret and generating its code; MFA for signing in to Guardian itself may be added only after the platform and authentication model are clarified. | The 2FA requirements must be clarified before design. |
+| ID | Assumption / Dependency | Owner | Impact if False | Mitigation / Action |
+|---|---|---|---|---|
+| A-01 | The first release serves one user and one local vault, without cloud synchronization. | Product owner (to be assigned) | Server architecture, accounts, synchronization, conflict resolution, and a separate threat model will be required. | Confirm scope before architecture approval; track synchronization as a separate change request. |
+| A-02 | The user keeps the master password separately and understands that losing it may make data impossible to decrypt. | Product owner / UX (to be assigned) | The user may permanently lose access; operator recovery would increase compromise risk. | Warn users during vault creation and document secure backup practices. |
+| A-03 | Guardian runs on a supported, uncompromised device. | User; security team owns threat-model disclosure | Protection against malware, keyloggers, and physical access to an unlocked device cannot be guaranteed. | Document assurance boundaries; perform threat analysis; use automatic locking and minimize secret lifetime in memory. |
+| A-04 | Specific browsers/OSs with supported official APIs will be selected for autofill. | Product owner / tech lead (to be assigned) | Interface design, integration testing, and autofill risk assessment cannot be completed. | Approve a platform matrix before implementing integration; autofill remains blocked until then. |
+| A-05 | Supported cryptography and random-generation libraries are available for the selected Java runtime and pass license and security reviews. | Tech lead / security specialist (to be assigned) | The platform or feature set may need to change; custom cryptography would introduce unacceptable risk. | Review libraries and licenses during the PoC; do not use custom cryptographic primitives. |
+| A-06 | “Two-factor authentication” in release 1.0 means storing TOTP secrets for external accounts; MFA for signing in to Guardian itself is not confirmed. | Product owner (to be assigned) | Authentication scope and UX will change if MFA is required for Guardian itself. | Confirm interpretation before design; track in the open questions in Section 5.1. |
+| A-07 | The user's device provides system time accurate enough for TOTP calculation. | User / platform-integration owner | Generated codes may be rejected by the external service when the device clock is wrong. | Indicate device-time status or warn the user about clock drift; determine the exact mechanism after platform selection. |
 
 ### 2.6 Apportioning of Requirements
 
 | Area / Requirements | Subsystem or Increment | Status |
 |---|---|---|
-| REQ-FUNC-001–005 | Release 1.0: local vault, records, categories, generation, notes | Planned |
+| REQ-FUNC-001–005, REQ-FUNC-008–009 | Release 1.0: local vault, records, categories, generation, notes, backup, and locking | Planned |
 | REQ-FUNC-006–007, REQ-INT-003 | Release 1.0: autofill and TOTP, subject to selection of a supported platform | Platform to be confirmed |
 | REQ-SEC-001–005, REQ-REL-001–002 | Release 1.0: baseline data protection and recovery | Mandatory for release |
 | REQ-INT-001–003, REQ-PERF-001–002, REQ-OBS-001 | Release 1.0: interface, integration, and measurable QoS | Planned; target devices to be confirmed |
-| REQ-AVAIL-001, REQ-COMP-001, REQ-INST-001, REQ-BUILD-001, REQ-MAINT-001, REQ-PORT-001, REQ-POC-001 | Release 1.0: release readiness, operations, and proof of feasibility | Project decisions required |
-| Synchronization, sharing, enterprise management, AI | Potential future releases | Out of scope for release 1.0 |
+| REQ-AVAIL-001, REQ-COMP-001–002, REQ-INST-001, REQ-BUILD-001, REQ-MAINT-001, REQ-PORT-001, REQ-POC-001, REQ-CM-001 | Release 1.0: release readiness, operations, and proof of feasibility | Project decisions required |
+| Synchronization, sharing, enterprise management, AI | Potential future releases | Out of scope for release 1.0; separate change requests |
+
+Platform allocations, dates, and budget remain product-owner decisions; until confirmed, they are tracked as open questions in Section 5.1 and are not release commitments. An owner shall be assigned to each deferred requirement when the corresponding increment is planned.
 
 ---
 
@@ -155,7 +159,7 @@ Requirements shall be verifiable, unambiguous, and uniquely identified. “Shall
 
 📃 Requirement template:
 ```markdown
-- ID: REQ-FUNC-001
+- ID: REQ-FUNC-EXAMPLE
 - Title: Short requirement title
 - Statement: The system shall...
 - Rationale: ...
@@ -189,7 +193,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Prevents accidental disclosure during ordinary navigation.
 - Acceptance Criteria: Passwords and TOTP secrets are not displayed in record lists; revealing/copying requires a separate action; interface errors contain no secret values.
 - Verification Method: Inspection, functional test.
-- More Information: —
+- More Information: CON-02; related: REQ-SEC-002.
 ```
 
 ```markdown
@@ -199,7 +203,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Preserves the product’s local nature and limits the data-leak surface.
 - Acceptance Criteria: Network-traffic analysis detects no outbound requests containing vault data; all permitted integration calls are related to documented autofill flows.
 - Verification Method: Traffic analysis, inspection.
-- More Information: —
+- More Information: CON-04; related: REQ-AVAIL-001.
 ```
 
 ```markdown
@@ -209,7 +213,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Limits the data available to an external application.
 - Acceptance Criteria: An integration test confirms that only selected fields are transferred and that unsupported or mismatched contexts are rejected.
 - Verification Method: Integration test, demonstration.
-- More Information: —
+- More Information: CON-03; related: REQ-FUNC-006, REQ-SEC-005.
 ```
 
 ### 3.2 Functional
@@ -221,7 +225,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: The master password is the primary user method of accessing data.
 - Acceptance Criteria: Records are available with the correct secret; with an incorrect secret, secret fields are not revealed and the application displays a neutral error message; the master password is not stored in plaintext.
 - Verification Method: Test, analysis.
-- More Information: —
+- More Information: CON-02, CON-05; related: REQ-SEC-001, REQ-SEC-002.
 ```
 
 ```markdown
@@ -231,7 +235,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: This is the core password-manager workflow.
 - Acceptance Criteria: Saved changes persist after the application is closed and reopened; a deleted record is not displayed in the normal list; save failures do not cause partial or silent data loss.
 - Verification Method: Functional test.
-- More Information: —
+- More Information: CON-02; related: REQ-REL-001.
 ```
 
 ```markdown
@@ -241,17 +245,17 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Categorization simplifies management of a growing vault.
 - Acceptance Criteria: A category can be created, renamed, assigned, and deleted; deleting a category does not delete records; search results match the query and do not expose passwords.
 - Verification Method: Functional test.
-- More Information: —
+- More Information: CON-02.
 ```
 
 ```markdown
 - ID: REQ-FUNC-004
 - Title: Password generation
-- Statement: The system shall generate a password using a platform cryptographically secure random source, with a user-selected length and selected character classes.
+- Statement: The system shall generate a password from 8 to 128 characters long using user-selected character classes and a cryptographically secure random source provided by the Java runtime.
 - Rationale: Random, unique passwords reduce guessing and reuse risks.
-- Acceptance Criteria: The result satisfies the selected constraints; if settings are incompatible or the length is invalid, the system reports an error and does not produce a password that violates the settings; the generator does not use a predictable random source.
+- Acceptance Criteria: The user can set the length and enable lowercase, uppercase, numeric, and special characters; if a class is selected, the result contains at least one character from each selected class; lengths 8 and 128 are supported and values outside the range are rejected; incompatible settings produce a clear error; testing confirms that no predictable random source is used.
 - Verification Method: Test, analysis.
-- More Information: —
+- More Information: CON-01; related: REQ-POC-001.
 ```
 
 ```markdown
@@ -261,27 +265,27 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Users may need to protect information that is not a username or password.
 - Acceptance Criteria: A note is available only after unlock; its contents do not appear in logs, external system search suggestions, or plaintext vault files.
 - Verification Method: Functional test, inspection.
-- More Information: —
+- More Information: CON-02; related: REQ-SEC-001, REQ-OBS-001.
 ```
 
 ```markdown
 - ID: REQ-FUNC-006
 - Title: Safe autofill
-- Statement: The system shall offer autofill only for a record selected by the user and only when the source matches the saved URL/source identifier according to the selected platform’s rules.
+- Statement: The system shall offer autofill only for a record explicitly selected by the user and only when the scheme, host name, and effective port match the saved source; navigation to another source shall require revalidation.
 - Rationale: Autofill must not send secrets to a lookalike or unrelated website.
-- Acceptance Criteria: For an allowed exact match, the user is shown the target record; on mismatch, an ambiguous source, or an unsupported context, the password is not transferred; filling occurs only after the user explicitly selects the record.
+- Acceptance Criteria: An exact source match is allowed; a lookalike domain, different port or scheme, or ambiguous URL is rejected; subdomains are not treated as matches automatically; filling occurs only after explicit user selection and the source is revalidated after redirects.
 - Verification Method: Integration and negative testing.
-- More Information: —
+- More Information: CON-03; related: REQ-INT-003, REQ-SEC-005.
 ```
 
 ```markdown
 - ID: REQ-FUNC-007
 - Title: TOTP codes for saved accounts
-- Statement: The system shall allow a TOTP secret to be stored with a record and shall display the current one-time code and the time remaining until it changes.
-- Rationale: The user requested two-factor authentication support.
-- Acceptance Criteria: The code matches the expected values for RFC 6238 test vectors; the TOTP secret is encrypted at rest; the code’s remaining lifetime is displayed; the secret is not included in a regular plaintext export.
+- Statement: The system shall allow the user to add a TOTP secret to a record and shall display the current one-time code, its remaining validity time, and non-default algorithm parameters.
+- Rationale: The user requested two-factor authentication support for external accounts.
+- Acceptance Criteria: RFC 6238 test vectors produce the expected codes; defaults are 6 digits, a 30-second period, and HMAC-SHA-1; explicitly supplied parameters from a QR/otpauth URI or manual entry are supported; the TOTP secret is encrypted at rest and excluded from unencrypted export; remaining validity time is displayed.
 - Verification Method: Test, analysis.
-- More Information: —
+- More Information: CON-02; RFC 6238; related: REQ-SEC-001.
 ```
 
 ```markdown
@@ -291,7 +295,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: This protects against data loss due to failure or reinstallation.
 - Acceptance Criteria: The backup does not contain secret fields in plaintext; restoring a valid backup returns records without changing their values; a corrupted or unsupported backup is rejected without overwriting the current vault.
 - Verification Method: Test, format inspection.
-- More Information: —
+- More Information: CON-02; related: REQ-SEC-001, REQ-REL-002.
 ```
 
 ```markdown
@@ -301,7 +305,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: This reduces the chance of accidental secret exposure.
 - Acceptance Criteria: Record contents are unavailable through the interface after locking; a revealed secret is masked again after a short configured interval or when the record screen is left.
 - Verification Method: Functional test.
-- More Information: —
+- More Information: CON-02; related: REQ-SEC-003.
 ```
 
 ### 3.3 Quality of Service
@@ -315,7 +319,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Provides acceptable responsiveness for everyday use.
 - Acceptance Criteria: The metrics are confirmed by a repeatable test on a recorded configuration; measurements do not include artificial network access.
 - Verification Method: Load test.
-- More Information: —
+- More Information: Target-device decision is open in Section 5.1.
 ```
 
 ```markdown
@@ -325,7 +329,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Vault-management operations should feel immediate.
 - Acceptance Criteria: The metric is measured with up to 5,000 records and a published test configuration.
 - Verification Method: Performance test.
-- More Information: —
+- More Information: Target-device decision is open in Section 5.1.
 ```
 
 #### 3.3.2 Security
@@ -337,7 +341,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Protects data confidentiality when device files or a backup are accessed.
 - Acceptance Criteria: Inspection of configuration and format confirms encryption; reading the file without the key does not reveal secret-field contents; no custom cryptographic primitives are used without an approved exception.
 - Verification Method: Analysis, inspection.
-- More Information: —
+- More Information: CON-02, CON-05; cryptographic parameters require approval before release.
 ```
 
 ```markdown
@@ -347,17 +351,17 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Disclosure of an application or vault file must not directly reveal the access secret.
 - Acceptance Criteria: The master password and key are absent from files, logs, crash reports, and telemetry; key-derivation parameters are documented and reviewed by a security specialist.
 - Verification Method: Analysis, test.
-- More Information: —
+- More Information: CON-02, CON-05; related: REQ-FUNC-001, REQ-OBS-001.
 ```
 
 ```markdown
 - ID: REQ-SEC-003
 - Title: Automatic locking
-- Statement: The system shall automatically lock an unlocked vault after 5 minutes of inactivity; the value shall be configurable by the user but shall not be fully disabled in release 1.0.
+- Statement: The system shall automatically lock an unlocked vault after 5 minutes of inactivity; the user may select an interval from 1 to 15 minutes but shall not disable locking entirely in release 1.0.
 - Rationale: Limits the time window in which an unlocked vault can be accessed.
-- Acceptance Criteria: The vault locks after the inactivity timer expires; secret records remain unavailable until re-authentication.
+- Acceptance Criteria: The vault locks when the inactivity timer expires; the 1- and 15-minute boundaries are supported and values outside the range are rejected; records remain unavailable until re-authentication.
 - Verification Method: Test.
-- More Information: —
+- More Information: CON-02; related: REQ-FUNC-009.
 ```
 
 ```markdown
@@ -367,17 +371,17 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Reduces the time for which another application can access a secret.
 - Acceptance Criteria: On a supported platform, timed clearing and clearing on lock are verified; if the operating system does not permit clearing, the user is warned before copying.
 - Verification Method: Integration test, demonstration.
-- More Information: —
+- More Information: CON-02, CON-03; clipboard support depends on the selected platform.
 ```
 
 ```markdown
 - ID: REQ-SEC-005
 - Title: Autofill source verification
-- Statement: The system shall verify the autofill source identifier using the platform’s safe rules and shall not fill a secret when the source does not match.
+- Statement: The system shall allow autofill only when the scheme, host name, and effective port match the record source; the source shall be revalidated after redirects.
 - Rationale: Protects against phishing and inadvertent password disclosure.
-- Acceptance Criteria: The test suite covers a matching domain, lookalike domain, subdomain, non-default port, invalid scheme, and ambiguous URL; filling is allowed only in documented acceptable cases.
+- Acceptance Criteria: Exact matches are allowed; lookalike domains, different ports or schemes, unknown domains, and ambiguous URLs are rejected; subdomains are not automatically treated as matches; negative tests confirm rejection in every disallowed case.
 - Verification Method: Negative test, analysis.
-- More Information: —
+- More Information: CON-03; related: REQ-FUNC-006, REQ-INT-003.
 ```
 
 #### 3.3.3 Reliability
@@ -389,7 +393,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Vault corruption may cause irrecoverable loss of secrets.
 - Acceptance Criteria: An injected interruption during a save does not leave a partially accepted record; the application reports unreadable data and preserves the original file/copy for recovery.
 - Verification Method: Fault-tolerance test.
-- More Information: —
+- More Information: CON-02; related: REQ-FUNC-002, REQ-FUNC-008.
 ```
 
 ```markdown
@@ -399,7 +403,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Protects against corrupted, tampered, or incompatible backups.
 - Acceptance Criteria: Corrupted and incorrectly authenticated backups are rejected; the original vault remains accessible.
 - Verification Method: Negative test.
-- More Information: —
+- More Information: CON-02; related: REQ-FUNC-008.
 ```
 
 #### 3.3.4 Availability
@@ -411,19 +415,21 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Passwords should remain available without a network, and the product has no external service dependency in release 1.0.
 - Acceptance Criteria: Creation, unlock, search, editing, generation, TOTP, and local backup work in an isolated network; the application does not attempt to send vault contents over an external network.
 - Verification Method: Isolated-environment test, network-traffic analysis.
-- More Information: —
+- More Information: CON-04; related: REQ-INT-002.
 ```
 
 #### 3.3.5 Observability
 
+In release 1.0, remote telemetry, usage analytics, and trace collection are disabled; diagnostics are local and minimal. A diagnostic report may be exported only with the user’s explicit consent.
+
 ```markdown
 - ID: REQ-OBS-001
 - Title: Safe diagnostics
-- Statement: The system shall provide diagnostic messages about failures and operation status without including passwords, the master password, TOTP secrets, notes, keys, or plaintext record contents.
+- Statement: The system shall provide local diagnostic messages about failures and operation status without passwords, the master password, TOTP secrets, notes, keys, or plaintext record contents; remote telemetry shall be disabled in release 1.0.
 - Rationale: Diagnostics are needed to fix problems, but logs must not become a data-leak channel.
-- Acceptance Criteria: Inspection of logs and reports after test operations confirms the absence of secrets; URL/username values are masked or omitted when they could identify an account.
+- Acceptance Criteria: Log and report inspection confirms the absence of secrets; URLs and usernames are masked or omitted; network monitoring detects no telemetry; export of a sanitized report requires explicit user consent.
 - Verification Method: Inspection, test.
-- More Information: —
+- More Information: CON-02, CON-04; related: REQ-SEC-002.
 ```
 
 ### 3.4 Compliance
@@ -435,8 +441,20 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Reduces legal and operational risks from dependencies.
 - Acceptance Criteria: Each release includes a component list and review results; critical vulnerabilities are not released without documented risk acceptance.
 - Verification Method: Release-artifact inspection.
-- More Information: —
+- More Information: CON-06; legal jurisdiction remains an open question in Section 5.1.
 ```
+
+```markdown
+- ID: REQ-COMP-002
+- Title: Identify applicable legal requirements
+- Statement: Before public release, the product owner shall identify legal and regulatory requirements applicable to target jurisdictions, document applicability, and assign owners for compliance.
+- Rationale: Requirements for personal data, consumer notices, accessibility, and software distribution depend on the release market.
+- Acceptance Criteria: An approved compliance checklist identifies jurisdictions, applicable requirements, a control owner, and evidence for each control; any requirement deemed inapplicable has a documented rationale.
+- Verification Method: Inspection.
+- More Information: CON-06; target jurisdictions are an open question in Section 5.1.
+```
+
+The jurisdiction and target market are not yet defined. Before public release, the product owner shall identify applicable requirements for personal-data protection, consumer notices, data export and retention, accessibility, licensing, and software distribution; a compliance owner shall record applicability and evidence. This SRS does not claim certification or legal compliance.
 
 ### 3.5 Design and Implementation
 
@@ -447,9 +465,9 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Title: Supported installation
 - Statement: A release shall include documented installation steps, Java runtime requirements, and a list of supported operating systems once these have been approved.
 - Rationale: Users must be able to install the application without undocumented dependencies.
-- Acceptance Criteria: A clean installation is verified on every target OS; the uninstall procedure describes what happens to the local vault and warns the user before data deletion.
+- Acceptance Criteria: A clean installation is verified on every target OS; documentation lists supported OSs and JDK requirements; uninstall warns before data deletion and does not remove the vault without confirmation; the update rollback procedure preserves user data.
 - Verification Method: Demonstration, inspection.
-- More Information: —
+- More Information: CON-01, CON-06; target operating systems and JDK are open in Section 5.1.
 ```
 
 #### 3.5.2 Build and Delivery
@@ -457,11 +475,11 @@ No specialized hardware is required. Installation shall run on devices that meet
 ```markdown
 - ID: REQ-BUILD-001
 - Title: Reproducible and verifiable delivery
-- Statement: The team shall pin Java and dependency versions, build release artifacts through an automated process, and publish artifact checksums.
+- Statement: The team shall pin JDK and dependency versions, build release artifacts through an automated process, verify them, and publish artifact checksums and a digital release signature.
 - Rationale: Provides release traceability and integrity.
-- Acceptance Criteria: Each version has a version number, dependency list, checksums, and build instructions; the release artifact passes automated checks.
+- Acceptance Criteria: Each version has a version number, component/license list, checksums, a verifiable signature, and build instructions; the release passes automated tests and dependency checks; only a verified artifact is promoted between environments.
 - Verification Method: Inspection, repeat build.
-- More Information: —
+- More Information: CON-01; related: REQ-PORT-001.
 ```
 
 #### 3.5.3 Distribution
@@ -477,7 +495,7 @@ Release 1.0 is intended to be installed and store data on the user’s device. R
 - Rationale: Safe changes require understanding their consequences for user vaults.
 - Acceptance Criteria: Documentation is available in the repository; change review includes a migration test or a rationale for why one is unnecessary.
 - Verification Method: Inspection.
-- More Information: —
+- More Information: CON-05; related: REQ-SEC-001, REQ-REL-002.
 ```
 
 #### 3.5.5 Reusability
@@ -493,7 +511,7 @@ Separate password-generation, serialization, and TOTP-processing components may 
 - Rationale: Simplifies support for target platforms and reduces platform-specific differences in critical logic.
 - Acceptance Criteria: A supported runtime is specified for each target environment; common tests pass without platform-specific workarounds; autofill integration is tested separately.
 - Verification Method: Build and test on target platforms.
-- More Information: —
+- More Information: CON-01; target JDK and operating systems are open in Section 5.1.
 ```
 
 #### 3.5.7 Cost
@@ -502,7 +520,7 @@ No budget, licensing model, or spending limit has been provided. In release 1.0,
 
 #### 3.5.8 Deadline
 
-Milestone and release dates have not been defined. Recommended release 1.0 readiness criteria are: target platforms and JDK approved; security requirements addressed; functional, integration, and negative autofill tests passed; backup restoration verified; dependency analysis completed; and a security review performed.
+Milestone and release dates have not been defined. Milestone dependencies are: the product owner approves platforms and JDK; the PoC validates critical integrations and cryptographic assumptions; architecture and threat model are then baselined; the release candidate passes functional, integration, negative, performance, and security tests. Release 1.0 readiness criteria are: no unresolved critical vulnerabilities without documented risk acceptance; backup and restore verified; installation, migration, and rollback instructions published; and release approval from the product owner and security specialist.
 
 #### 3.5.9 Proof of Concept
 
@@ -511,14 +529,24 @@ Milestone and release dates have not been defined. Recommended release 1.0 readi
 - Title: Validation of critical technical risks
 - Statement: Before the architecture is baselined, the team shall conduct a limited feasibility study of local-vault encryption, password generation, TOTP storage, and safe autofill on the selected platform.
 - Rationale: Autofill and secure secret handling depend on the platform and need early validation.
-- Acceptance Criteria: The study demonstrates vault creation/unlock and correct rejection of an incorrect password; test secrets do not appear in plaintext files or logs; autofill refuses an unsuitable source; limitations and results are documented.
+- Acceptance Criteria: The PoC is timeboxed to two calendar weeks after platform approval; it demonstrates vault creation/unlock and correct rejection of an incorrect password; test secrets do not appear in plaintext files or logs; autofill refuses an unsuitable source; results, limitations, and a go/revise decision are documented.
 - Verification Method: Demonstration, analysis.
-- More Information: —
+- More Information: CON-03, CON-05; results gate the architecture baseline.
 ```
 
 #### 3.5.10 Change Management
 
-Changes to functional and security requirements shall be made through SRS review and recorded in the revision history. Changes to the vault format, cryptographic parameters, autofill, or lock timers shall include an impact assessment for security, backward compatibility, and migration. Changes that may make an existing backup unreadable require a migration plan or an explicit warning before an update is installed.
+Changes shall be classified as bug fixes, compatible additions, or breaking changes. Each change request shall be reviewed by the product owner; security and vault-format changes shall also be reviewed by the security specialist. Every approved change shall be recorded in the revision history and release notes; incompatible changes shall provide migration instructions and a rollback plan before installation.
+
+```markdown
+- ID: REQ-CM-001
+- Title: Change control and communication
+- Statement: The team shall classify, assess, approve, and document changes to Guardian requirements and releases before including each change in a release.
+- Rationale: Controlled change management prevents data loss and unintended reduction in security.
+- Acceptance Criteria: Each change records its category, security/compatibility impact assessment, approval by the product owner and, where applicable, the security specialist; format changes include migration and rollback plans; releases include a changelog and user guidance when needed.
+- Verification Method: Inspection, analysis.
+- More Information: Related to REQ-MAINT-001, REQ-SEC-001, and REQ-REL-002.
+```
 
 ### 3.6 AI/ML
 
@@ -556,38 +584,42 @@ Each requirement shall be verified on supported target devices, which must be id
 
 | Requirement ID | Verification Method | Test / Artifact | Status | Evidence |
 |---|---|---|---|---|
-| REQ-INT-001 | Inspection, functional test | View, reveal, and copy scenarios | Planned | — |
-| REQ-INT-002 | Traffic analysis, inspection | Network flows and permitted calls | Planned | — |
-| REQ-INT-003 | Integration test, demonstration | Field/context transfer matrix | Blocked by platform selection | — |
-| REQ-FUNC-001 | Test, analysis | Create/unlock with correct and incorrect secrets | Planned | — |
-| REQ-FUNC-002 | Functional test | Record CRUD, persistence after restart, deletion | Planned | — |
-| REQ-FUNC-003 | Functional test | Categories and search query set | Planned | — |
-| REQ-FUNC-004 | Test, analysis | Boundary settings and random-source review | Planned | — |
-| REQ-FUNC-005 | Test, inspection | Note after locking; file/log inspection | Planned | — |
-| REQ-FUNC-006 | Integration, negative test | Matrix of valid and unsuitable sources | Blocked by platform selection | — |
-| REQ-FUNC-007 | Test, analysis | RFC 6238 vectors and stored-data inspection | Planned | — |
-| REQ-FUNC-008 | Test, inspection | Backup/restore round trip and corrupted backup | Planned | — |
-| REQ-FUNC-009 | Functional test | Masking, reveal, and timed locking | Planned | — |
-| REQ-PERF-001 | Load test | 5,000-record dataset, p95 measurements | Blocked by target device | — |
-| REQ-PERF-002 | Performance test | Local operations, p95 measurements | Blocked by target device | — |
-| REQ-SEC-001 | Analysis, inspection | Vault format and cryptography review | Planned | — |
-| REQ-SEC-002 | Analysis, test | Secret search in files, logs, and crash reports | Planned | — |
-| REQ-SEC-003 | Test | Automatic lock and re-authentication | Planned | — |
-| REQ-SEC-004 | Integration test | Clipboard clearing and OS limitation warning | Blocked by platform selection | — |
-| REQ-SEC-005 | Negative test, analysis | Domain, URL, and autofill-context checks | Blocked by platform selection | — |
-| REQ-REL-001 | Fault-tolerance test | Interrupted write and recovery | Planned | — |
-| REQ-REL-002 | Negative test | Corrupt and incorrectly authenticated backup | Planned | — |
-| REQ-AVAIL-001 | Isolated-environment test | Offline local flows and traffic analysis | Planned | — |
-| REQ-OBS-001 | Inspection, test | Log and diagnostic-artifact review | Planned | — |
-| REQ-COMP-001 | Inspection | Dependency list, licenses, vulnerability report | Planned | — |
-| REQ-INST-001 | Demonstration, inspection | Clean install and uninstall on target OSs | Blocked by platform selection | — |
-| REQ-BUILD-001 | Inspection, repeat build | CI release, checksums, SBOM/component list | Planned | — |
-| REQ-MAINT-001 | Inspection | Documentation and format-change assessment | Planned | — |
-| REQ-PORT-001 | Build and test | CI on approved JDK releases/target OSs | Blocked by platform selection | — |
-| REQ-POC-001 | Demonstration, analysis | PoC report using safe test data | Planned | — |
+| REQ-INT-001 | Inspection, functional test | Planned artifact: `tests/verification/REQ-INT-001.md` | Planned | — |
+| REQ-INT-002 | Traffic analysis, inspection | Planned artifact: `tests/verification/REQ-INT-002.md` | Planned | — |
+| REQ-INT-003 | Integration test, demonstration | Planned artifact: `tests/verification/REQ-INT-003.md` | Blocked by platform selection | — |
+| REQ-FUNC-001 | Test, analysis | Planned artifact: `tests/verification/REQ-FUNC-001.md` | Planned | — |
+| REQ-FUNC-002 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-002.md` | Planned | — |
+| REQ-FUNC-003 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-003.md` | Planned | — |
+| REQ-FUNC-004 | Test, analysis | Planned artifact: `tests/verification/REQ-FUNC-004.md` | Planned | — |
+| REQ-FUNC-005 | Test, inspection | Planned artifact: `tests/verification/REQ-FUNC-005.md` | Planned | — |
+| REQ-FUNC-006 | Integration, negative test | Planned artifact: `tests/verification/REQ-FUNC-006.md` | Blocked by platform selection | — |
+| REQ-FUNC-007 | Test, analysis | Planned artifact: `tests/verification/REQ-FUNC-007.md` | Planned | — |
+| REQ-FUNC-008 | Test, inspection | Planned artifact: `tests/verification/REQ-FUNC-008.md` | Planned | — |
+| REQ-FUNC-009 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-009.md` | Planned | — |
+| REQ-PERF-001 | Load test | Planned artifact: `tests/verification/REQ-PERF-001.md` | Blocked by target device | — |
+| REQ-PERF-002 | Performance test | Planned artifact: `tests/verification/REQ-PERF-002.md` | Blocked by target device | — |
+| REQ-SEC-001 | Analysis, inspection | Planned artifact: `tests/verification/REQ-SEC-001.md` | Planned | — |
+| REQ-SEC-002 | Analysis, test | Planned artifact: `tests/verification/REQ-SEC-002.md` | Planned | — |
+| REQ-SEC-003 | Test | Planned artifact: `tests/verification/REQ-SEC-003.md` | Planned | — |
+| REQ-SEC-004 | Integration test | Planned artifact: `tests/verification/REQ-SEC-004.md` | Blocked by platform selection | — |
+| REQ-SEC-005 | Negative test, analysis | Planned artifact: `tests/verification/REQ-SEC-005.md` | Blocked by platform selection | — |
+| REQ-REL-001 | Fault-tolerance test | Planned artifact: `tests/verification/REQ-REL-001.md` | Planned | — |
+| REQ-REL-002 | Negative test | Planned artifact: `tests/verification/REQ-REL-002.md` | Planned | — |
+| REQ-AVAIL-001 | Isolated-environment test | Planned artifact: `tests/verification/REQ-AVAIL-001.md` | Planned | — |
+| REQ-OBS-001 | Inspection, test | Planned artifact: `tests/verification/REQ-OBS-001.md` | Planned | — |
+| REQ-COMP-001 | Inspection | Planned artifact: `tests/verification/REQ-COMP-001.md` | Planned | — |
+| REQ-COMP-002 | Inspection | Planned artifact: `tests/verification/REQ-COMP-002.md` | Planned | — |
+| REQ-INST-001 | Demonstration, inspection | Planned artifact: `tests/verification/REQ-INST-001.md` | Blocked by platform selection | — |
+| REQ-BUILD-001 | Inspection, repeat build | Planned artifact: `tests/verification/REQ-BUILD-001.md` | Planned | — |
+| REQ-MAINT-001 | Inspection | Planned artifact: `tests/verification/REQ-MAINT-001.md` | Planned | — |
+| REQ-PORT-001 | Build and test | Planned artifact: `tests/verification/REQ-PORT-001.md` | Blocked by platform selection | — |
+| REQ-POC-001 | Demonstration, analysis | Planned artifact: `tests/verification/REQ-POC-001.md` | Planned | — |
+| REQ-CM-001 | Inspection, analysis | Planned artifact: `tests/verification/REQ-CM-001.md` | Planned | — |
+
+Test paths in the matrix are planned locations: artifacts shall be added to the repository with the tests; until created, status remains “Planned” or “Blocked” according to dependencies. Evidence shall link to a CI report or verification record.
+
 
 ---
-
 ## 5. Appendixes
 
 ### 5.1 Open Questions
