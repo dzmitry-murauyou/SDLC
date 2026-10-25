@@ -1,7 +1,7 @@
 # Software Requirements Specification
 ## For Guardian — Password Manager
 
-Version 0.1  
+Version 0.2<br>
 Prepared by Not specified  
 Organization not specified  
 2026-10-26
@@ -37,6 +37,7 @@ Organization not specified
 | Name | Date | Reason For Changes | Version |
 |------|------|--------------------|---------|
 | Not specified | 2026-10-26 | Initial SRS draft for Guardian | 0.1 |
+| Project team | 2026-10-26 | Confirmed Windows 10+, FIDO2 USB key, master-password backup, and SysML v2 visual specification | 0.2 |
 
 ## 1. Introduction
 
@@ -48,7 +49,7 @@ This SRS defines **what** Guardian must do and the criteria for accepting the re
 
 ### 1.2 Product Scope
 
-Guardian (release 1.0) is a Windows desktop password manager. It lets users create and store encrypted records containing usernames, passwords, website addresses, notes, and TOTP secrets; organize and search records; generate passwords; and autofill credentials in supported Windows browsers. Unlocking the vault requires a master password and a second factor; the application also generates TOTP codes for external services. To recover data or move it between Guardian instances, the user creates an encrypted backup file and stores it independently, including on removable media; Guardian accounts and cloud synchronization are not used. The application shall be implemented in Java, with no specific JDK version mandated by the product owner.
+Guardian (release 1.0) is a Windows desktop password manager targeting Windows 10 and later. It lets users create and store encrypted records containing usernames, passwords, website addresses, notes, and TOTP secrets; organize and search records; generate passwords; and autofill credentials in supported Windows browsers. Unlocking the vault requires a master password and an enrolled FIDO2/WebAuthn USB security key; the application also generates TOTP codes for external services. To recover data or move it between Guardian instances, the user creates an encrypted backup file and stores it independently, including on removable media; Guardian accounts and cloud synchronization are not used. The application shall be implemented in Java, with no specific JDK version mandated by the product owner.
 
 **In scope:** a Windows desktop application; a local encrypted vault; mandatory two-factor unlock; password, note, and TOTP-secret records; categories, search, and password generation; autofill in approved Windows browsers; and export/restore of an encrypted Guardian backup for transfer between Guardian instances and storage on removable media.
 
@@ -62,7 +63,8 @@ Guardian (release 1.0) is a Windows desktop password manager. It lets users crea
 | Encrypted vault / vault | A set of user records saved in encrypted form. |
 | Master password | A secret set by the user to unlock the vault; it must not be stored in plaintext. |
 | TOTP | Time-Based One-Time Password — a one-time code calculated using a secret and the current time. |
-| MFA / 2FA | Multi-factor / two-factor authentication. Guardian requires it to unlock the application and separately supports TOTP codes for external accounts. |
+| MFA / 2FA | Multi-factor / two-factor authentication. Guardian requires a master password and a FIDO2/WebAuthn USB security key for unlock; TOTP codes for external accounts are separate. |
+| FIDO2/WebAuthn USB security key | A hardware key enrolled as the second factor for Guardian sign-in. Recovery after loss remains to be approved. |
 | SRS | Software Requirements Specification — a specification of software requirements. |
 | Java | The programming language and runtime required for Guardian implementation by the original request. |
 
@@ -86,7 +88,7 @@ Section 2 defines the product context, user classes, constraints, assumptions, a
 
 ### 2.1 Product Perspective
 
-Guardian is a Windows desktop application for an individual user, replacing password storage in notes, browser forms, and spreadsheets. It stores data locally and interacts with Windows and supported browsers only for autofill, clipboard access, file dialogs, and session locking. There is no network account or synchronization service; the user transfers data using an encrypted Guardian backup file. A product owner and support function must be assigned before release; a network SLA does not apply to the offline product, and support staff must not access secrets.
+Guardian is a Windows desktop application for an individual user on Windows 10 and later, replacing password storage in notes, browser forms, and spreadsheets. It stores data locally and interacts with Windows and supported browsers only for autofill, clipboard access, file dialogs, and session locking. There is no network account or synchronization service; the user transfers data using an encrypted Guardian backup file. A product owner and support function must be assigned before release; a network SLA does not apply to the offline product, and support staff must not access secrets.
 
 ```text
 User ──> Guardian (interface, encrypted vault, generator, TOTP)
@@ -109,10 +111,10 @@ User ──> Guardian (interface, encrypted vault, generator, TOTP)
 
 | ID | Constraint |
 |---|---|
-| CON-01 | Guardian shall be a Windows desktop application; mobile versions and separate applications for other operating systems are out of scope for release 1.0. |
+| CON-01 | Guardian shall be a Windows 10-or-later desktop application; mobile versions and separate applications for other operating systems are out of scope for release 1.0. |
 | CON-02 | Application logic shall be implemented in Java. The product owner does not mandate a specific Java/JDK release; the team shall select and pin a supported release before building a release artifact. |
-| CON-03 | Secret fields in the local vault and backup files shall be encrypted; the master password, key, and Guardian authentication factor shall not be stored in plaintext. |
-| CON-04 | Signing in to Guardian shall require a master password and an independent second factor; TOTP secrets for external services are a separate feature. |
+| CON-03 | Secret fields in the local vault and backup files shall be encrypted; the master password, key, and Guardian authentication factor shall not be stored in plaintext. The backup shall use the Guardian password (master password), with no separate backup password; an additional encryption layer may be considered in the design decision. |
+| CON-04 | Signing in to Guardian shall require a master password and a FIDO2/WebAuthn-compatible USB security key; TOTP secrets for external services are a separate feature. |
 | CON-05 | Release 1.0 shall not include a Guardian account, cloud storage, or automatic synchronization; transfer between instances shall be manual through an encrypted Guardian file. |
 | CON-06 | Import/export shall support only the Guardian backup format; plaintext exports to generic formats and imports from third-party managers are out of scope. |
 | CON-07 | The release 1.0 interface and user documentation shall be in Russian; no other localization is required. |
@@ -128,20 +130,20 @@ User ──> Guardian (interface, encrypted vault, generator, TOTP)
 | Autofill user | Frequently signs in to websites/applications and expects to select an appropriate record without disclosing it to an unrelated source. | Selects and fills a matching record; a secret is revealed only after an explicit action. |
 | Support engineer/developer | Maintains the application and diagnoses errors, but must not access user vault contents. | No routine access to user secrets. |
 
-The release 1.0 interface and user documentation shall be in Russian only. Guardian targets Windows Desktop; the interface shall support standard keyboard operation, Windows scaling, and system accessibility settings. Conformance to a specific accessibility standard remains to be confirmed before release.
+The release 1.0 interface and user documentation shall be in Russian only. Guardian targets Windows 10 and later; the interface shall support standard keyboard operation, Windows scaling, and system accessibility settings. Conformance to a specific accessibility standard remains to be confirmed before release.
 
 ### 2.5 Assumptions and Dependencies
 
 | ID | Assumption / Dependency | Owner | Impact if False | Mitigation / Action |
 |---|---|---|---|---|
 | A-01 | Release 1.0 uses a local vault without a Guardian account or cloud/automatic synchronization; transfer is through a backup file. | Product owner (to be assigned) | Accounts, server-side services, conflict handling, and a new threat model would be required. | Baseline manual export/restore as the only transfer mechanism for release 1.0. |
-| A-02 | The user must keep the master password and any recovery credentials secure; whether a separate backup password is required remains an open decision. | Product owner / UX (to be assigned) | Losing both secrets may make the data unrecoverable. | Warn users when creating a vault and backup; do not promise operator recovery. |
-| A-03 | The device meets a supported Windows Desktop configuration and is uncompromised. | User; security team owns threat-model disclosure | Protection against malware, keyloggers, and physical access to an unlocked device cannot be guaranteed. | Document assurance boundaries; perform threat analysis; lock the vault on Windows lock/sign-out. |
+| A-02 | The user must keep the master password and a spare USB key or other approved recovery credentials secure. | Product owner / UX (to be assigned) | Losing the master password or the only available recovery key may lock the user out. | Warn users when creating a vault and backup; do not promise operator recovery. |
+| A-03 | The device runs Windows 10 or later in a configuration from the approved support matrix and is uncompromised. | User; security team owns threat-model disclosure | Protection against malware, keyloggers, and physical access to an unlocked device cannot be guaranteed. | Document assurance boundaries; perform threat analysis; lock the vault on Windows lock/sign-out. |
 | A-04 | Supported Windows browsers will be selected for autofill, and the desktop-to-browser integration will be validated. | Product owner / tech lead (to be assigned) | Autofill testing and safe domain binding cannot be completed. | Approve a browser matrix before release; explicitly exclude unsupported browsers. |
 | A-05 | Supported Java libraries for cryptography, TOTP, and secure random generation are available and pass security and license reviews. | Tech lead / security specialist (to be assigned) | Libraries or the Java runtime may need to change; custom cryptography would introduce unacceptable risk. | Select and review libraries during the PoC; pin Java/JDK before release build. |
-| A-06 | Guardian’s second factor is independent of the vault; the provisional choice is TOTP from a separate authenticator on another device. | Product owner / security specialist (to be assigned) | Losing the second factor may lock out the user; keeping it on the same device may weaken the threat model. | Confirm factor type, recovery procedure, and interaction between MFA and the backup file before design. |
+| A-06 | The confirmed Guardian second factor is a FIDO2/WebAuthn USB security key; recovery after losing the key (spare key or another mechanism) has not yet been selected. | Project team / security specialist | Losing the only key may lock out the user. | Approve and verify a secure recovery flow before implementation. |
 | A-07 | Windows system time is accurate enough to generate TOTP codes for external services. | User / platform-integration owner | External services may reject codes when the clock is wrong. | Use Windows system time and inform users of an evident time-synchronization issue. |
-| A-08 | Working assumption: the backup file may use a password set by the user during export and entered during restore; the file can be saved to removable media as an ordinary file. The protection method remains to be confirmed. | Product owner / security specialist (to be assigned) | The backup may be undecryptable or leak if stored with the device. | Confirm backup-password handling; never store that password in the file and warn users to protect removable media. |
+| A-08 | The backup file uses the Guardian password (master password), not a separate backup password; the user may store it on removable media. Whether an additional encryption layer is needed remains to be decided. | Project team / security specialist | Losing the master password may make the backup inaccessible; an extra layer may complicate recovery. | Do not store the password in the file; approve the cryptographic scheme and recovery UX before implementation. |
 
 ### 2.6 Apportioning of Requirements
 
@@ -179,11 +181,17 @@ Requirements shall be verifiable, unambiguous, and uniquely identified. “Shall
 
 #### 3.1.1 User Interfaces
 
-The interface shall let users manage the vault, records, categories, generator, and TOTP without manually editing files. Secrets shall be masked by default; revealing or copying them shall require an explicit user action. Errors during unlock, save, import/export, and autofill shall explain what happened without displaying secret values. The release 1.0 interface targets Windows Desktop; keyboard navigation, Windows scaling, and system accessibility features shall be verified in a separate UX specification.
+The interface shall let users manage the vault, records, categories, generator, and TOTP without manually editing files. Secrets shall be masked by default; revealing or copying them shall require an explicit user action. Errors during unlock, save, import/export, and autofill shall explain what happened without displaying secret values. The release 1.0 interface targets Windows 10 and later; keyboard navigation, Windows scaling, and system accessibility features shall be verified in a separate UX specification.
+
+**Graphical specification (SysML v2 and UI mockup):** the figure shows Guardian boundaries, the FIDO2 USB key, browser integration, encrypted-file transfer, and an unlock-screen sketch. It is a conceptual illustration, not final design. Source model: `diagrams/guardian.sysml`.
+
+![Conceptual SysML v2 model and Guardian UI mockup](diagrams/guardian-sysmlv2-overview.png)
+
+*Figure 3.1. Conceptual SysML v2 system context and Guardian sign-in mockup. The interface labels are in Russian, as required for release 1.0.*
 
 #### 3.1.2 Hardware Interfaces
 
-No specialized hardware is required. Installation shall run on supported Windows Desktop configurations and a Java runtime selected by the team for compatibility. Windows integration shall use documented platform interfaces. Biometric sensors are not mandatory dependencies for vault access.
+Guardian shall support a FIDO2/WebAuthn USB security key for unlock. Installation shall run on Windows 10 and later with a compatible Java runtime selected by the team. No other specialized devices or biometric sensors are required.
 
 #### 3.1.3 Software Interfaces
 
@@ -226,7 +234,7 @@ No specialized hardware is required. Installation shall run on supported Windows
 ```markdown
 - ID: REQ-FUNC-001
 - Title: Vault creation and unlock
-- Statement: The system shall allow the user to create a vault, set a master password, and unlock the vault only after verifying the master password and an independent second factor.
+- Statement: The system shall allow the user to create a vault, set a master password, and unlock the vault only after verifying the master password and an enrolled FIDO2/WebAuthn USB security key.
 - Rationale: The master password is the primary user method of accessing data.
 - Acceptance Criteria: Records are available with a correct master password and second factor; if either factor is invalid, secret fields are not revealed and the application displays a neutral error message; the master password is not stored in plaintext.
 - Verification Method: Test, analysis.
@@ -298,7 +306,7 @@ No specialized hardware is required. Installation shall run on supported Windows
 - Title: Backup and transfer between Guardian instances
 - Statement: The system shall export the local vault to an encrypted file in Guardian’s proprietary format and restore it in another Guardian instance after user confirmation.
 - Rationale: This gives the user an offline way to protect against data loss and manually transfer data between their Guardian instances, including storage on removable media.
-- Acceptance Criteria: Export creates an encrypted file at a user-selected path; restoring a verified backup returns records with their original values; a corrupted or unsupported backup is rejected without overwriting the current vault; the file does not expose secret fields in plaintext; restore in a Guardian instance shall not bypass mandatory MFA and shall use an approved factor check or re-enrollment flow. Whether MFA settings are included in the file and the specific file-protection method shall be recorded in a design decision; generic formats and exchange with other password managers are not supported.
+- Acceptance Criteria: Export creates an encrypted file at a user-selected path, decryptable with the Guardian password (master password) and no separate backup password; restoring a verified backup returns records with their original values; a corrupted or unsupported backup, or an incorrect password, is rejected without overwriting the current vault; the file does not expose secret fields in plaintext; restore in a Guardian instance shall not bypass mandatory MFA and shall use an approved key check or re-enrollment flow. Whether to add a second encryption layer and whether MFA settings are included in the file shall be recorded in a design decision; generic formats and exchange with other password managers are not supported.
 - Verification Method: Functional test, format inspection.
 - More Information: CON-03, CON-05, CON-06; assumption A-08; related: REQ-SEC-001, REQ-REL-002.
 ```
@@ -318,9 +326,9 @@ No specialized hardware is required. Installation shall run on supported Windows
 - Title: Mandatory two-factor authentication for Guardian
 - Statement: The system shall require both master-password verification and an independent second factor for every vault unlock; access recovery is permitted only through a separately approved process that does not reduce to master-password-only verification.
 - Rationale: This adds a factor to access to Guardian itself; it is separate from generating TOTP codes for external services.
-- Acceptance Criteria: The user enrolls a second factor during initial setup; secret records remain unavailable until both factors are successfully verified; an invalid factor is rejected; the recovery and factor re-enrollment procedure is approved and verified before release; factor data is protected according to the approved design and is not available in plaintext.
+- Acceptance Criteria: The user enrolls a FIDO2/WebAuthn USB security key during initial setup; secret records remain unavailable until the master password and key are successfully verified; a missing or invalid key does not unlock the vault; an approved recovery process for a lost key is verified before release; authentication data is protected according to the approved design and is not available in plaintext.
 - Verification Method: Functional test, negative test, inspection.
-- More Information: CON-04; assumption A-06; the specific second-factor type and recovery procedure require confirmation before design.
+- More Information: CON-04; assumption A-06; the second-factor type is confirmed; recovery after key loss remains to be decided.
 ```
 
 ### 3.3 Quality of Service
@@ -451,7 +459,7 @@ In release 1.0, remote telemetry, usage analytics, and trace collection are disa
 - More Information: CON-09; target jurisdictions are an open question in Section 5.1.
 ```
 
-The jurisdiction and target market are not yet defined. Before public release, the product owner shall identify applicable requirements for personal-data protection, consumer notices, data export and retention, accessibility, licensing, and software distribution; a compliance owner shall record applicability and evidence. This SRS does not claim certification or legal compliance.
+Jurisdiction, accessibility, licensing, and distribution rules are deferred as nonessential to the current design stage. Applicable requirements must still be identified and reviewed before public release. This SRS makes no certification or legal-compliance claim; product, security, and legal-review owners have not yet been assigned.
 
 ### 3.5 Design and Implementation
 
@@ -462,7 +470,7 @@ The jurisdiction and target market are not yet defined. Before public release, t
 - Title: Supported installation
 - Statement: A release shall include documented installation steps, Java runtime requirements, and a list of supported operating systems once these have been approved.
 - Rationale: Users must be able to install the application without undocumented dependencies.
-- Acceptance Criteria: A clean installation is verified on supported Windows configurations; documentation lists Java runtime requirements; uninstall warns before data deletion and does not remove the vault without confirmation; the update rollback procedure preserves user data.
+- Acceptance Criteria: A clean installation is verified on supported Windows 10 and later configurations; documentation lists Java runtime requirements; uninstall warns before data deletion and does not remove the vault without confirmation; the update rollback procedure preserves user data.
 - Verification Method: Demonstration, inspection.
 - More Information: CON-01, CON-02; the team selects the Java/JDK release before building a release artifact.
 ```
@@ -524,7 +532,7 @@ Milestone and release dates have not been defined. Milestone dependencies are: s
 ```markdown
 - ID: REQ-POC-001
 - Title: Validation of critical technical risks
-- Statement: Before the architecture is baselined, the team shall conduct a limited feasibility study of local-vault encryption, password generation, TOTP storage, Guardian two-factor unlock, encrypted backup/restore, and safe autofill on Windows Desktop.
+- Statement: Before the architecture is baselined, the team shall conduct a limited feasibility study of local-vault encryption, password generation, TOTP storage, unlock with a FIDO2/WebAuthn USB key, encrypted backup/restore, and safe autofill on Windows 10 and later.
 - Rationale: Autofill and secure secret handling depend on the platform and need early validation.
 - Acceptance Criteria: The PoC demonstrates vault creation and two-factor unlock; correct rejection of invalid credentials; encrypted backup/restore; test secrets absent from plaintext files and logs; rejection of an unsuitable autofill source; and documented results, limitations, and a go/revise decision. The schedule is set by project planning.
 - Verification Method: Demonstration, analysis.
@@ -577,7 +585,7 @@ Not applicable: no models are deployed, retrained, or monitored.
 
 ## 4. Verification
 
-Each requirement shall be verified on a supported Windows configuration listed in the platform matrix before release. Security requirements require both positive and negative scenarios. Test data shall be synthetic and shall not contain real user secrets.
+Each requirement shall be verified on a supported Windows 10 and later configuration listed in the platform matrix before release. Security requirements require both positive and negative scenarios. Test data shall be synthetic and shall not contain real user secrets.
 
 | Requirement ID | Verification Method | Test / Artifact | Status | Evidence |
 |---|---|---|---|---|
@@ -620,12 +628,10 @@ Test paths in the matrix are planned locations: artifacts shall be added to the 
 
 ### 5.1 Open Questions
 
-1. Which Windows Desktop releases will be supported, and which browsers will be included in the autofill matrix?
-2. Which independent second factor and secure Guardian account-recovery procedure will be approved?
-3. Which protection method and credentials will be used for the encrypted Guardian backup file, and how will transfer interact with MFA settings?
-4. Which jurisdictions, accessibility requirements, licensing obligations, and software-distribution rules apply to the release?
-5. Who will be appointed product owner and owner of the release security and legal reviews?
+1. Which Windows browsers will be included in the autofill matrix? The target OS is confirmed as Windows 10 and later.
+2. Will recovery after losing the USB key use a spare FIDO2 key, another verified process, or both?
+3. Will a second encryption layer for backup files be mandatory, optional, or excluded from release 1.0?
 
 ### 5.2 Draft Limitations
 
-This SRS records the confirmed Windows desktop scope for release 1.0, mandatory 2FA for Guardian, Russian localization, manual encrypted-file transfer between Guardian instances, and Java implementation. Exact Windows releases and browsers, the second-factor and recovery mechanism, backup-file protection, responsible owners, and applicable legal requirements remain open. Numerical performance targets and an automatic-lock timer are not release 1.0 acceptance criteria.
+This SRS records the confirmed Windows desktop scope for release 1.0, mandatory 2FA for Guardian, Russian localization, manual encrypted-file transfer between Guardian instances, and Java implementation. The browser matrix, recovery after loss of a FIDO2 key, and whether to add a second encryption layer remain open. Legal requirements, licensing, and assignment of owners are deferred until preparation for public release. Numerical performance targets and an automatic-lock timer are not release 1.0 acceptance criteria.
