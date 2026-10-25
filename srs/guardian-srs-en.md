@@ -40,7 +40,7 @@ Organization not specified
 
 ## 1. Introduction
 
-This document specifies the requirements for Guardian, an application for securely managing passwords and related secrets. It defines the intended capabilities, first-release boundaries, constraints, quality attributes, and verification methods; it does not prescribe the internal architecture except for the explicit requirement to use Java. The document is intended for the product owner, developers, testers, and security specialists. Unknown parameters are identified as assumptions or decisions requiring confirmation.
+This document specifies the requirements for Guardian, an application for securely managing passwords and related secrets. It defines the intended capabilities, first-release boundaries, constraints, quality attributes, and verification methods; it does not prescribe the internal architecture except for the explicit requirement to use Java. The document is intended for the product owner, developers, testers, and security specialists. Confirmed decisions and remaining assumptions are distinguished in Sections 2.5 and 5.1.
 
 ### 1.1 Document Purpose
 
@@ -48,11 +48,11 @@ This SRS defines **what** Guardian must do and the criteria for accepting the re
 
 ### 1.2 Product Scope
 
-Guardian (release 1.0) is a password manager intended to create and securely store credentials, organize them into categories, and use them safely to sign in to supported services. Users will be able to create records containing a username, password, website address, notes, and optional TOTP secrets; find and edit records; generate strong passwords; and initiate autofill. Access to the vault is protected by a master password, and secrets must be encrypted at rest. The application must be implemented using Java.
+Guardian (release 1.0) is a Windows desktop password manager. It lets users create and store encrypted records containing usernames, passwords, website addresses, notes, and TOTP secrets; organize and search records; generate passwords; and autofill credentials in supported Windows browsers. Unlocking the vault requires a master password and a second factor; the application also generates TOTP codes for external services. To recover data or move it between Guardian instances, the user creates an encrypted backup file and stores it independently, including on removable media; Guardian accounts and cloud synchronization are not used. The application shall be implemented in Java, with no specific JDK version mandated by the product owner.
 
-**In scope:** a secure local vault for one user; password and note records; categories and search; a password generator; autofill in explicitly supported environments; storage of TOTP secrets and generation of one-time codes; vault locking; and backup of encrypted data.
+**In scope:** a Windows desktop application; a local encrypted vault; mandatory two-factor unlock; password, note, and TOTP-secret records; categories, search, and password generation; autofill in approved Windows browsers; and export/restore of an encrypted Guardian backup for transfer between Guardian instances and storage on removable media.
 
-**Out of scope for release 1.0:** team/shared vaults, server-side synchronization across devices, enterprise administration, operator-assisted master-password recovery, importing passwords from arbitrary applications, AI-based features, and guarantees of compliance with any specific legislation. The platforms on which the application and autofill will be available must be agreed before interface design.
+**Out of scope for release 1.0:** mobile applications and applications for other operating systems, a Guardian account, cloud or automatic synchronization, shared/enterprise vaults, imports from third-party managers, unencrypted exports to generic formats, operator-assisted secret recovery, and AI features. The exact supported Windows releases and autofill browsers shall be listed in a platform matrix before release.
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 
@@ -62,7 +62,7 @@ Guardian (release 1.0) is a password manager intended to create and securely sto
 | Encrypted vault / vault | A set of user records saved in encrypted form. |
 | Master password | A secret set by the user to unlock the vault; it must not be stored in plaintext. |
 | TOTP | Time-Based One-Time Password — a one-time code calculated using a secret and the current time. |
-| MFA / 2FA | Multi-factor / two-factor authentication; access confirmation using two or more independent factors. |
+| MFA / 2FA | Multi-factor / two-factor authentication. Guardian requires it to unlock the application and separately supports TOTP codes for external accounts. |
 | SRS | Software Requirements Specification — a specification of software requirements. |
 | Java | The programming language and runtime required for Guardian implementation by the original request. |
 
@@ -86,7 +86,7 @@ Section 2 defines the product context, user classes, constraints, assumptions, a
 
 ### 2.1 Product Perspective
 
-Guardian is a new standalone product for an individual user, replacing password storage in notes, browser forms, or spreadsheets. Data is held in a local encrypted vault; autofill interacts only with a browser or application explicitly selected and supported for the release. External account and synchronization services are outside the scope of version 1.0. A product owner and support team must be assigned before release; a network SLA does not apply to the offline application, and support is limited to documentation and diagnostics without support-staff access to secrets.
+Guardian is a Windows desktop application for an individual user, replacing password storage in notes, browser forms, and spreadsheets. It stores data locally and interacts with Windows and supported browsers only for autofill, clipboard access, file dialogs, and session locking. There is no network account or synchronization service; the user transfers data using an encrypted Guardian backup file. A product owner and support function must be assigned before release; a network SLA does not apply to the offline product, and support staff must not access secrets.
 
 ```text
 User ──> Guardian (interface, encrypted vault, generator, TOTP)
@@ -96,25 +96,29 @@ User ──> Guardian (interface, encrypted vault, generator, TOTP)
 
 ### 2.2 Product Functions
 
-- Create, unlock, lock, and delete a personal vault.
+- Create, two-factor unlock, lock, and delete a personal vault.
 - Add, view, edit, and delete records containing credentials and notes.
 - Organize records into user-defined categories and search permitted metadata.
 - Generate random passwords using parameters selected by the user.
 - Autofill credentials in supported environments after checking the record’s source match.
 - Store TOTP secrets and display current one-time codes.
 - Prevent accidental disclosure through secret masking, automatic locking, and clipboard clearing.
-- Create and restore backups in an encrypted format.
+- Create an encrypted backup file and restore/transfer data between Guardian instances; the user may store the file on removable media.
 
 ### 2.3 Product Constraints
 
 | ID | Constraint |
 |---|---|
-| CON-01 | Guardian application logic must be implemented in Java. The target JDK release and supported operating systems remain to be agreed. |
-| CON-02 | Vault secret fields must be encrypted when saved; the plaintext master password and decryption key must not be written to files, logs, or telemetry. |
-| CON-03 | Autofill is allowed only in environments for which a secure integration mechanism has been defined and verified; the platform list remains an open decision. |
-| CON-04 | Release 1.0 does not assume server-side synchronization, vault sharing, or operator-assisted secret recovery. |
-| CON-05 | Requirements do not prescribe specific encryption algorithms, a KDF, UI framework, or integration protocol. These must be selected and justified in design documentation using supported cryptographic facilities. |
-| CON-06 | Jurisdiction, legal obligations, target devices, and budget are unspecified; applicable requirements must be reviewed before release. |
+| CON-01 | Guardian shall be a Windows desktop application; mobile versions and separate applications for other operating systems are out of scope for release 1.0. |
+| CON-02 | Application logic shall be implemented in Java. The product owner does not mandate a specific Java/JDK release; the team shall select and pin a supported release before building a release artifact. |
+| CON-03 | Secret fields in the local vault and backup files shall be encrypted; the master password, key, and Guardian authentication factor shall not be stored in plaintext. |
+| CON-04 | Signing in to Guardian shall require a master password and an independent second factor; TOTP secrets for external services are a separate feature. |
+| CON-05 | Release 1.0 shall not include a Guardian account, cloud storage, or automatic synchronization; transfer between instances shall be manual through an encrypted Guardian file. |
+| CON-06 | Import/export shall support only the Guardian backup format; plaintext exports to generic formats and imports from third-party managers are out of scope. |
+| CON-07 | The release 1.0 interface and user documentation shall be in Russian; no other localization is required. |
+| CON-08 | Specific cryptographic algorithms and parameters shall be selected and justified in design documentation using reviewed libraries; custom cryptography is prohibited without a separately approved exception. |
+| CON-09 | Jurisdiction, applicable legal requirements, and licensing obligations shall be identified before public release. |
+| CON-10 | Numerical performance targets and an automatic-lock inactivity interval are not release 1.0 acceptance criteria; they may be defined later from operational experience. |
 
 ### 2.4 User Characteristics
 
@@ -124,38 +128,39 @@ User ──> Guardian (interface, encrypted vault, generator, TOTP)
 | Autofill user | Frequently signs in to websites/applications and expects to select an appropriate record without disclosing it to an unrelated source. | Selects and fills a matching record; a secret is revealed only after an explicit action. |
 | Support engineer/developer | Maintains the application and diagnoses errors, but must not access user vault contents. | No routine access to user secrets. |
 
-The first release interface and documentation must be available in Russian; the interface structure should allow English localization. Accessibility conformance and platform-specific guidelines must be established after target platforms are selected.
+The release 1.0 interface and user documentation shall be in Russian only. Guardian targets Windows Desktop; the interface shall support standard keyboard operation, Windows scaling, and system accessibility settings. Conformance to a specific accessibility standard remains to be confirmed before release.
 
 ### 2.5 Assumptions and Dependencies
 
 | ID | Assumption / Dependency | Owner | Impact if False | Mitigation / Action |
 |---|---|---|---|---|
-| A-01 | The first release serves one user and one local vault, without cloud synchronization. | Product owner (to be assigned) | Server architecture, accounts, synchronization, conflict resolution, and a separate threat model will be required. | Confirm scope before architecture approval; track synchronization as a separate change request. |
-| A-02 | The user keeps the master password separately and understands that losing it may make data impossible to decrypt. | Product owner / UX (to be assigned) | The user may permanently lose access; operator recovery would increase compromise risk. | Warn users during vault creation and document secure backup practices. |
-| A-03 | Guardian runs on a supported, uncompromised device. | User; security team owns threat-model disclosure | Protection against malware, keyloggers, and physical access to an unlocked device cannot be guaranteed. | Document assurance boundaries; perform threat analysis; use automatic locking and minimize secret lifetime in memory. |
-| A-04 | Specific browsers/OSs with supported official APIs will be selected for autofill. | Product owner / tech lead (to be assigned) | Interface design, integration testing, and autofill risk assessment cannot be completed. | Approve a platform matrix before implementing integration; autofill remains blocked until then. |
-| A-05 | Supported cryptography and random-generation libraries are available for the selected Java runtime and pass license and security reviews. | Tech lead / security specialist (to be assigned) | The platform or feature set may need to change; custom cryptography would introduce unacceptable risk. | Review libraries and licenses during the PoC; do not use custom cryptographic primitives. |
-| A-06 | “Two-factor authentication” in release 1.0 means storing TOTP secrets for external accounts; MFA for signing in to Guardian itself is not confirmed. | Product owner (to be assigned) | Authentication scope and UX will change if MFA is required for Guardian itself. | Confirm interpretation before design; track in the open questions in Section 5.1. |
-| A-07 | The user's device provides system time accurate enough for TOTP calculation. | User / platform-integration owner | Generated codes may be rejected by the external service when the device clock is wrong. | Indicate device-time status or warn the user about clock drift; determine the exact mechanism after platform selection. |
+| A-01 | Release 1.0 uses a local vault without a Guardian account or cloud/automatic synchronization; transfer is through a backup file. | Product owner (to be assigned) | Accounts, server-side services, conflict handling, and a new threat model would be required. | Baseline manual export/restore as the only transfer mechanism for release 1.0. |
+| A-02 | The user must keep the master password and any recovery credentials secure; whether a separate backup password is required remains an open decision. | Product owner / UX (to be assigned) | Losing both secrets may make the data unrecoverable. | Warn users when creating a vault and backup; do not promise operator recovery. |
+| A-03 | The device meets a supported Windows Desktop configuration and is uncompromised. | User; security team owns threat-model disclosure | Protection against malware, keyloggers, and physical access to an unlocked device cannot be guaranteed. | Document assurance boundaries; perform threat analysis; lock the vault on Windows lock/sign-out. |
+| A-04 | Supported Windows browsers will be selected for autofill, and the desktop-to-browser integration will be validated. | Product owner / tech lead (to be assigned) | Autofill testing and safe domain binding cannot be completed. | Approve a browser matrix before release; explicitly exclude unsupported browsers. |
+| A-05 | Supported Java libraries for cryptography, TOTP, and secure random generation are available and pass security and license reviews. | Tech lead / security specialist (to be assigned) | Libraries or the Java runtime may need to change; custom cryptography would introduce unacceptable risk. | Select and review libraries during the PoC; pin Java/JDK before release build. |
+| A-06 | Guardian’s second factor is independent of the vault; the provisional choice is TOTP from a separate authenticator on another device. | Product owner / security specialist (to be assigned) | Losing the second factor may lock out the user; keeping it on the same device may weaken the threat model. | Confirm factor type, recovery procedure, and interaction between MFA and the backup file before design. |
+| A-07 | Windows system time is accurate enough to generate TOTP codes for external services. | User / platform-integration owner | External services may reject codes when the clock is wrong. | Use Windows system time and inform users of an evident time-synchronization issue. |
+| A-08 | Working assumption: the backup file may use a password set by the user during export and entered during restore; the file can be saved to removable media as an ordinary file. The protection method remains to be confirmed. | Product owner / security specialist (to be assigned) | The backup may be undecryptable or leak if stored with the device. | Confirm backup-password handling; never store that password in the file and warn users to protect removable media. |
 
 ### 2.6 Apportioning of Requirements
 
 | Area / Requirements | Subsystem or Increment | Status |
 |---|---|---|
-| REQ-FUNC-001–005, REQ-FUNC-008–009 | Release 1.0: local vault, records, categories, generation, notes, backup, and locking | Planned |
-| REQ-FUNC-006–007, REQ-INT-003 | Release 1.0: autofill and TOTP, subject to selection of a supported platform | Platform to be confirmed |
-| REQ-SEC-001–005, REQ-REL-001–002 | Release 1.0: baseline data protection and recovery | Mandatory for release |
-| REQ-INT-001–003, REQ-PERF-001–002, REQ-OBS-001 | Release 1.0: interface, integration, and measurable QoS | Planned; target devices to be confirmed |
+| REQ-FUNC-001–005, REQ-FUNC-008–010 | Release 1.0: local vault, records, categories, generation, notes, backup, and locking | Planned |
+| REQ-FUNC-006–007, REQ-INT-003, REQ-SEC-005 | Release 1.0: autofill and TOTP for supported Windows browsers | Approve browser matrix |
+| REQ-SEC-001–005, REQ-REL-001–002 | Release 1.0: data protection, MFA, locking, and recovery | Mandatory for release |
+| REQ-INT-001–003, REQ-OBS-001 | Release 1.0: Windows interface, integrations, and safe diagnostics | Planned |
 | REQ-AVAIL-001, REQ-COMP-001–002, REQ-INST-001, REQ-BUILD-001, REQ-MAINT-001, REQ-PORT-001, REQ-POC-001, REQ-CM-001 | Release 1.0: release readiness, operations, and proof of feasibility | Project decisions required |
-| Synchronization, sharing, enterprise management, AI | Potential future releases | Out of scope for release 1.0; separate change requests |
+| Automatic/cloud synchronization, accounts, sharing, other OSs, AI | Potential future releases | Out of scope for release 1.0; separate change requests |
 
-Platform allocations, dates, and budget remain product-owner decisions; until confirmed, they are tracked as open questions in Section 5.1 and are not release commitments. An owner shall be assigned to each deferred requirement when the corresponding increment is planned.
+The exact Windows releases and browsers remain in the platform matrix; numerical QoS targets are not release 1.0 acceptance criteria. Remaining decisions are listed in Section 5.1.
 
 ---
 
 ## 3. Requirements
 
-Requirements shall be verifiable, unambiguous, and uniquely identified. “Shall” and “shall not” are mandatory for release 1.0 unless a requirement is marked as awaiting agreement. Performance and timer values in this draft are targets and must be confirmed on target devices before the requirements baseline is approved.
+Requirements shall be verifiable, unambiguous, and uniquely identified. “Shall” and “shall not” are mandatory for release 1.0 unless a requirement is marked as awaiting agreement. Numerical performance targets and an inactivity interval for automatic locking are not release 1.0 acceptance criteria (CON-10).
 
 📃 Requirement template:
 ```markdown
@@ -174,15 +179,15 @@ Requirements shall be verifiable, unambiguous, and uniquely identified. “Shall
 
 #### 3.1.1 User Interfaces
 
-The interface shall let users manage the vault, records, categories, generator, and TOTP without manually editing files. Secrets shall be masked by default; revealing or copying them shall require an explicit user action. Errors during unlock, save, import/export, and autofill shall explain what happened without displaying secret values. Exact screens and platform-specific flows will be specified in a separate UX specification after target operating systems are selected.
+The interface shall let users manage the vault, records, categories, generator, and TOTP without manually editing files. Secrets shall be masked by default; revealing or copying them shall require an explicit user action. Errors during unlock, save, import/export, and autofill shall explain what happened without displaying secret values. The release 1.0 interface targets Windows Desktop; keyboard navigation, Windows scaling, and system accessibility features shall be verified in a separate UX specification.
 
 #### 3.1.2 Hardware Interfaces
 
-No specialized hardware is required. Installation shall run on devices that meet the minimum requirements of the selected Java runtime and target operating system. If autofill on a platform requires system integration or a biometric sensor, that dependency shall be stated explicitly and shall not be mandatory for vault access unless separately agreed.
+No specialized hardware is required. Installation shall run on supported Windows Desktop configurations and a Java runtime selected by the team for compatibility. Windows integration shall use documented platform interfaces. Biometric sensors are not mandatory dependencies for vault access.
 
 #### 3.1.3 Software Interfaces
 
-- Interaction with a browser or operating system for autofill is permitted only through an officially supported interface of the selected platform.
+- Interaction with Windows browsers for autofill is permitted only through a supported and documented integration interface.
 - The record format shall support a title, username, password, URL/source identifier, categories, notes, and optional TOTP data.
 - An external network API, cloud synchronization, and third-party analytics SDKs are outside the scope of version 1.0.
 
@@ -193,17 +198,17 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Prevents accidental disclosure during ordinary navigation.
 - Acceptance Criteria: Passwords and TOTP secrets are not displayed in record lists; revealing/copying requires a separate action; interface errors contain no secret values.
 - Verification Method: Inspection, functional test.
-- More Information: CON-02; related: REQ-SEC-002.
+- More Information: CON-07; related: REQ-SEC-002.
 ```
 
 ```markdown
 - ID: REQ-INT-002
 - Title: External integration restrictions
-- Statement: In release 1.0, the system shall not transmit vault data to external network services; browser or operating-system integration is permitted only for user-initiated autofill.
+- Statement: In release 1.0, the system shall not transmit vault data to external network services; local Windows and browser integration is permitted only for documented functions. A secret may be transferred to a browser only during user-initiated autofill.
 - Rationale: Preserves the product’s local nature and limits the data-leak surface.
-- Acceptance Criteria: Network-traffic analysis detects no outbound requests containing vault data; all permitted integration calls are related to documented autofill flows.
+- Acceptance Criteria: Network-traffic analysis detects no outbound requests containing vault data; local Windows calls are limited to documented file selection, clipboard, session-locking, and autofill flows; the browser receives only user-selected fields in a confirmed target context.
 - Verification Method: Traffic analysis, inspection.
-- More Information: CON-04; related: REQ-AVAIL-001.
+- More Information: CON-05; related: REQ-AVAIL-001.
 ```
 
 ```markdown
@@ -213,7 +218,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Limits the data available to an external application.
 - Acceptance Criteria: An integration test confirms that only selected fields are transferred and that unsupported or mismatched contexts are rejected.
 - Verification Method: Integration test, demonstration.
-- More Information: CON-03; related: REQ-FUNC-006, REQ-SEC-005.
+- More Information: CON-01, assumption A-04; related: REQ-FUNC-006, REQ-SEC-005.
 ```
 
 ### 3.2 Functional
@@ -221,11 +226,11 @@ No specialized hardware is required. Installation shall run on devices that meet
 ```markdown
 - ID: REQ-FUNC-001
 - Title: Vault creation and unlock
-- Statement: The system shall allow the user to create a vault, set a master password, and unlock the vault only after validating the entered secret.
+- Statement: The system shall allow the user to create a vault, set a master password, and unlock the vault only after verifying the master password and an independent second factor.
 - Rationale: The master password is the primary user method of accessing data.
-- Acceptance Criteria: Records are available with the correct secret; with an incorrect secret, secret fields are not revealed and the application displays a neutral error message; the master password is not stored in plaintext.
+- Acceptance Criteria: Records are available with a correct master password and second factor; if either factor is invalid, secret fields are not revealed and the application displays a neutral error message; the master password is not stored in plaintext.
 - Verification Method: Test, analysis.
-- More Information: CON-02, CON-05; related: REQ-SEC-001, REQ-SEC-002.
+- More Information: CON-03, CON-04; related: REQ-SEC-001, REQ-SEC-002, REQ-FUNC-010.
 ```
 
 ```markdown
@@ -235,7 +240,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: This is the core password-manager workflow.
 - Acceptance Criteria: Saved changes persist after the application is closed and reopened; a deleted record is not displayed in the normal list; save failures do not cause partial or silent data loss.
 - Verification Method: Functional test.
-- More Information: CON-02; related: REQ-REL-001.
+- More Information: CON-03; related: REQ-REL-001.
 ```
 
 ```markdown
@@ -245,7 +250,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Categorization simplifies management of a growing vault.
 - Acceptance Criteria: A category can be created, renamed, assigned, and deleted; deleting a category does not delete records; search results match the query and do not expose passwords.
 - Verification Method: Functional test.
-- More Information: CON-02.
+- More Information: CON-03.
 ```
 
 ```markdown
@@ -255,7 +260,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Random, unique passwords reduce guessing and reuse risks.
 - Acceptance Criteria: The user can set the length and enable lowercase, uppercase, numeric, and special characters; if a class is selected, the result contains at least one character from each selected class; lengths 8 and 128 are supported and values outside the range are rejected; incompatible settings produce a clear error; testing confirms that no predictable random source is used.
 - Verification Method: Test, analysis.
-- More Information: CON-01; related: REQ-POC-001.
+- More Information: CON-02, CON-08; related: REQ-POC-001.
 ```
 
 ```markdown
@@ -265,7 +270,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Users may need to protect information that is not a username or password.
 - Acceptance Criteria: A note is available only after unlock; its contents do not appear in logs, external system search suggestions, or plaintext vault files.
 - Verification Method: Functional test, inspection.
-- More Information: CON-02; related: REQ-SEC-001, REQ-OBS-001.
+- More Information: CON-03; related: REQ-SEC-001, REQ-OBS-001.
 ```
 
 ```markdown
@@ -275,7 +280,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Autofill must not send secrets to a lookalike or unrelated website.
 - Acceptance Criteria: An exact source match is allowed; a lookalike domain, different port or scheme, or ambiguous URL is rejected; subdomains are not treated as matches automatically; filling occurs only after explicit user selection and the source is revalidated after redirects.
 - Verification Method: Integration and negative testing.
-- More Information: CON-03; related: REQ-INT-003, REQ-SEC-005.
+- More Information: CON-01, assumption A-04; related: REQ-INT-003, REQ-SEC-005.
 ```
 
 ```markdown
@@ -285,52 +290,44 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: The user requested two-factor authentication support for external accounts.
 - Acceptance Criteria: RFC 6238 test vectors produce the expected codes; defaults are 6 digits, a 30-second period, and HMAC-SHA-1; explicitly supplied parameters from a QR/otpauth URI or manual entry are supported; the TOTP secret is encrypted at rest and excluded from unencrypted export; remaining validity time is displayed.
 - Verification Method: Test, analysis.
-- More Information: CON-02; RFC 6238; related: REQ-SEC-001.
+- More Information: CON-03; RFC 6238; related: REQ-SEC-001.
 ```
 
 ```markdown
 - ID: REQ-FUNC-008
-- Title: Backup and restore
-- Statement: The system shall allow the user to create a backup of the vault in a protected format and restore it after user confirmation.
-- Rationale: This protects against data loss due to failure or reinstallation.
-- Acceptance Criteria: The backup does not contain secret fields in plaintext; restoring a valid backup returns records without changing their values; a corrupted or unsupported backup is rejected without overwriting the current vault.
-- Verification Method: Test, format inspection.
-- More Information: CON-02; related: REQ-SEC-001, REQ-REL-002.
+- Title: Backup and transfer between Guardian instances
+- Statement: The system shall export the local vault to an encrypted file in Guardian’s proprietary format and restore it in another Guardian instance after user confirmation.
+- Rationale: This gives the user an offline way to protect against data loss and manually transfer data between their Guardian instances, including storage on removable media.
+- Acceptance Criteria: Export creates an encrypted file at a user-selected path; restoring a verified backup returns records with their original values; a corrupted or unsupported backup is rejected without overwriting the current vault; the file does not expose secret fields in plaintext; restore in a Guardian instance shall not bypass mandatory MFA and shall use an approved factor check or re-enrollment flow. Whether MFA settings are included in the file and the specific file-protection method shall be recorded in a design decision; generic formats and exchange with other password managers are not supported.
+- Verification Method: Functional test, format inspection.
+- More Information: CON-03, CON-05, CON-06; assumption A-08; related: REQ-SEC-001, REQ-REL-002.
 ```
 
 ```markdown
 - ID: REQ-FUNC-009
 - Title: Locking and revealing secrets
-- Statement: The system shall let users lock the vault immediately, shall mask passwords and notes by default, and shall require an explicit action to reveal a secret temporarily.
+- Statement: The system shall let users lock the vault immediately, shall mask passwords and notes by default, and shall require an explicit action to reveal a secret.
 - Rationale: This reduces the chance of accidental secret exposure.
-- Acceptance Criteria: Record contents are unavailable through the interface after locking; a revealed secret is masked again after a short configured interval or when the record screen is left.
+- Acceptance Criteria: Record contents are unavailable through the interface after locking; a revealed secret is masked again when the record screen is left or the vault is locked.
 - Verification Method: Functional test.
-- More Information: CON-02; related: REQ-SEC-003.
+- More Information: CON-04, CON-10; related: REQ-SEC-003.
+```
+
+```markdown
+- ID: REQ-FUNC-010
+- Title: Mandatory two-factor authentication for Guardian
+- Statement: The system shall require both master-password verification and an independent second factor for every vault unlock; access recovery is permitted only through a separately approved process that does not reduce to master-password-only verification.
+- Rationale: This adds a factor to access to Guardian itself; it is separate from generating TOTP codes for external services.
+- Acceptance Criteria: The user enrolls a second factor during initial setup; secret records remain unavailable until both factors are successfully verified; an invalid factor is rejected; the recovery and factor re-enrollment procedure is approved and verified before release; factor data is protected according to the approved design and is not available in plaintext.
+- Verification Method: Functional test, negative test, inspection.
+- More Information: CON-04; assumption A-06; the specific second-factor type and recovery procedure require confirmation before design.
 ```
 
 ### 3.3 Quality of Service
 
 #### 3.3.1 Performance
 
-```markdown
-- ID: REQ-PERF-001
-- Title: Unlock and search response time
-- Statement: On an agreed target device, the system shall unlock a local vault of up to 5,000 records within 3 seconds at the 95th percentile after entry of a correct master password; metadata search shall complete within 500 ms at the 95th percentile.
-- Rationale: Provides acceptable responsiveness for everyday use.
-- Acceptance Criteria: The metrics are confirmed by a repeatable test on a recorded configuration; measurements do not include artificial network access.
-- Verification Method: Load test.
-- More Information: Target-device decision is open in Section 5.1.
-```
-
-```markdown
-- ID: REQ-PERF-002
-- Title: Response to user actions
-- Statement: For ordinary local operations (opening a record, changing a category, or saving a record), the system shall provide a visible result within 1 second at the 95th percentile on the target device.
-- Rationale: Vault-management operations should feel immediate.
-- Acceptance Criteria: The metric is measured with up to 5,000 records and a published test configuration.
-- Verification Method: Performance test.
-- More Information: Target-device decision is open in Section 5.1.
-```
+No numerical performance targets or response-time acceptance criteria are set for release 1.0. Responsiveness is assessed through ordinary usability testing; quantitative targets may be agreed through a separate change after user feedback (CON-10).
 
 #### 3.3.2 Security
 
@@ -341,7 +338,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Protects data confidentiality when device files or a backup are accessed.
 - Acceptance Criteria: Inspection of configuration and format confirms encryption; reading the file without the key does not reveal secret-field contents; no custom cryptographic primitives are used without an approved exception.
 - Verification Method: Analysis, inspection.
-- More Information: CON-02, CON-05; cryptographic parameters require approval before release.
+- More Information: CON-03, CON-08; cryptographic parameters require approval before release.
 ```
 
 ```markdown
@@ -351,27 +348,27 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Disclosure of an application or vault file must not directly reveal the access secret.
 - Acceptance Criteria: The master password and key are absent from files, logs, crash reports, and telemetry; key-derivation parameters are documented and reviewed by a security specialist.
 - Verification Method: Analysis, test.
-- More Information: CON-02, CON-05; related: REQ-FUNC-001, REQ-OBS-001.
+- More Information: CON-03, CON-08; related: REQ-FUNC-001, REQ-OBS-001.
 ```
 
 ```markdown
 - ID: REQ-SEC-003
-- Title: Automatic locking
-- Statement: The system shall automatically lock an unlocked vault after 5 minutes of inactivity; the user may select an interval from 1 to 15 minutes but shall not disable locking entirely in release 1.0.
-- Rationale: Limits the time window in which an unlocked vault can be accessed.
-- Acceptance Criteria: The vault locks when the inactivity timer expires; the 1- and 15-minute boundaries are supported and values outside the range are rejected; records remain unavailable until re-authentication.
-- Verification Method: Test.
-- More Information: CON-02; related: REQ-FUNC-009.
+- Title: Vault locking
+- Statement: The system shall let the user lock the vault immediately and shall automatically lock it when the Windows session is locked or signed out.
+- Rationale: This limits access to an open vault when the user stops working in the session.
+- Acceptance Criteria: Manual locking immediately makes records unavailable; locking or signing out of Windows locks Guardian; reopening requires successful verification of the authentication factors. No inactivity interval is specified as a release 1.0 requirement.
+- Verification Method: Functional test, Windows integration test.
+- More Information: CON-04, CON-10; related: REQ-FUNC-009, REQ-FUNC-010.
 ```
 
 ```markdown
 - ID: REQ-SEC-004
-- Title: Clipboard protection
-- Statement: If the user copies a password to the clipboard, the system shall clear it within 30 seconds or when the vault is locked, if the platform allows clipboard control.
-- Rationale: Reduces the time for which another application can access a secret.
-- Acceptance Criteria: On a supported platform, timed clearing and clearing on lock are verified; if the operating system does not permit clearing, the user is warned before copying.
+- Title: Clipboard clearing
+- Statement: If the user copies a password to the clipboard, the system shall clear it when the vault is locked, if Windows permits clipboard control.
+- Rationale: This reduces the time that another application can access a secret after vault use ends.
+- Acceptance Criteria: Copying and clearing on lock are verified by an integration test on a supported configuration; if Windows does not permit clearing, the application warns before copying and provides an explicit clear action.
 - Verification Method: Integration test, demonstration.
-- More Information: CON-02, CON-03; clipboard support depends on the selected platform.
+- More Information: CON-01, CON-03; clearing depends on Windows permissions.
 ```
 
 ```markdown
@@ -381,7 +378,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Protects against phishing and inadvertent password disclosure.
 - Acceptance Criteria: Exact matches are allowed; lookalike domains, different ports or schemes, unknown domains, and ambiguous URLs are rejected; subdomains are not automatically treated as matches; negative tests confirm rejection in every disallowed case.
 - Verification Method: Negative test, analysis.
-- More Information: CON-03; related: REQ-FUNC-006, REQ-INT-003.
+- More Information: CON-01, A-04; related: REQ-FUNC-006, REQ-INT-003.
 ```
 
 #### 3.3.3 Reliability
@@ -393,7 +390,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Vault corruption may cause irrecoverable loss of secrets.
 - Acceptance Criteria: An injected interruption during a save does not leave a partially accepted record; the application reports unreadable data and preserves the original file/copy for recovery.
 - Verification Method: Fault-tolerance test.
-- More Information: CON-02; related: REQ-FUNC-002, REQ-FUNC-008.
+- More Information: CON-03, CON-05; related: REQ-FUNC-002, REQ-FUNC-008.
 ```
 
 ```markdown
@@ -403,7 +400,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Protects against corrupted, tampered, or incompatible backups.
 - Acceptance Criteria: Corrupted and incorrectly authenticated backups are rejected; the original vault remains accessible.
 - Verification Method: Negative test.
-- More Information: CON-02; related: REQ-FUNC-008.
+- More Information: CON-03, CON-05; related: REQ-FUNC-008.
 ```
 
 #### 3.3.4 Availability
@@ -415,7 +412,7 @@ No specialized hardware is required. Installation shall run on devices that meet
 - Rationale: Passwords should remain available without a network, and the product has no external service dependency in release 1.0.
 - Acceptance Criteria: Creation, unlock, search, editing, generation, TOTP, and local backup work in an isolated network; the application does not attempt to send vault contents over an external network.
 - Verification Method: Isolated-environment test, network-traffic analysis.
-- More Information: CON-04; related: REQ-INT-002.
+- More Information: CON-05; related: REQ-INT-002.
 ```
 
 #### 3.3.5 Observability
@@ -429,7 +426,7 @@ In release 1.0, remote telemetry, usage analytics, and trace collection are disa
 - Rationale: Diagnostics are needed to fix problems, but logs must not become a data-leak channel.
 - Acceptance Criteria: Log and report inspection confirms the absence of secrets; URLs and usernames are masked or omitted; network monitoring detects no telemetry; export of a sanitized report requires explicit user consent.
 - Verification Method: Inspection, test.
-- More Information: CON-02, CON-04; related: REQ-SEC-002.
+- More Information: CON-03, CON-05; related: REQ-SEC-002.
 ```
 
 ### 3.4 Compliance
@@ -441,7 +438,7 @@ In release 1.0, remote telemetry, usage analytics, and trace collection are disa
 - Rationale: Reduces legal and operational risks from dependencies.
 - Acceptance Criteria: Each release includes a component list and review results; critical vulnerabilities are not released without documented risk acceptance.
 - Verification Method: Release-artifact inspection.
-- More Information: CON-06; legal jurisdiction remains an open question in Section 5.1.
+- More Information: CON-09; legal jurisdiction remains an open question in Section 5.1.
 ```
 
 ```markdown
@@ -451,7 +448,7 @@ In release 1.0, remote telemetry, usage analytics, and trace collection are disa
 - Rationale: Requirements for personal data, consumer notices, accessibility, and software distribution depend on the release market.
 - Acceptance Criteria: An approved compliance checklist identifies jurisdictions, applicable requirements, a control owner, and evidence for each control; any requirement deemed inapplicable has a documented rationale.
 - Verification Method: Inspection.
-- More Information: CON-06; target jurisdictions are an open question in Section 5.1.
+- More Information: CON-09; target jurisdictions are an open question in Section 5.1.
 ```
 
 The jurisdiction and target market are not yet defined. Before public release, the product owner shall identify applicable requirements for personal-data protection, consumer notices, data export and retention, accessibility, licensing, and software distribution; a compliance owner shall record applicability and evidence. This SRS does not claim certification or legal compliance.
@@ -465,9 +462,9 @@ The jurisdiction and target market are not yet defined. Before public release, t
 - Title: Supported installation
 - Statement: A release shall include documented installation steps, Java runtime requirements, and a list of supported operating systems once these have been approved.
 - Rationale: Users must be able to install the application without undocumented dependencies.
-- Acceptance Criteria: A clean installation is verified on every target OS; documentation lists supported OSs and JDK requirements; uninstall warns before data deletion and does not remove the vault without confirmation; the update rollback procedure preserves user data.
+- Acceptance Criteria: A clean installation is verified on supported Windows configurations; documentation lists Java runtime requirements; uninstall warns before data deletion and does not remove the vault without confirmation; the update rollback procedure preserves user data.
 - Verification Method: Demonstration, inspection.
-- More Information: CON-01, CON-06; target operating systems and JDK are open in Section 5.1.
+- More Information: CON-01, CON-02; the team selects the Java/JDK release before building a release artifact.
 ```
 
 #### 3.5.2 Build and Delivery
@@ -479,7 +476,7 @@ The jurisdiction and target market are not yet defined. Before public release, t
 - Rationale: Provides release traceability and integrity.
 - Acceptance Criteria: Each version has a version number, component/license list, checksums, a verifiable signature, and build instructions; the release passes automated tests and dependency checks; only a verified artifact is promoted between environments.
 - Verification Method: Inspection, repeat build.
-- More Information: CON-01; related: REQ-PORT-001.
+- More Information: CON-02; related: REQ-PORT-001.
 ```
 
 #### 3.5.3 Distribution
@@ -506,12 +503,12 @@ Separate password-generation, serialization, and TOTP-processing components may 
 
 ```markdown
 - ID: REQ-PORT-001
-- Title: Portability of Java components
-- Statement: Java components shall build and pass automated tests on the approved JDK release; platform-dependent features shall be isolated from vault logic.
-- Rationale: Simplifies support for target platforms and reduces platform-specific differences in critical logic.
-- Acceptance Criteria: A supported runtime is specified for each target environment; common tests pass without platform-specific workarounds; autofill integration is tested separately.
-- Verification Method: Build and test on target platforms.
-- More Information: CON-01; target JDK and operating systems are open in Section 5.1.
+- Title: Java component compatibility with Windows
+- Statement: Java components shall build and pass automated tests on the JDK release selected by the team for compatibility; Windows integrations shall be isolated from vault logic.
+- Rationale: Ensures compatibility of the selected Java runtime with target Windows configurations and isolates system integration from vault logic.
+- Acceptance Criteria: A compatible runtime is specified for supported Windows configurations; common tests pass without workarounds; Windows and browser integrations are tested separately.
+- Verification Method: Build and test on supported Windows configurations.
+- More Information: CON-01, CON-02; the team selects the Java/JDK release before building a release artifact.
 ```
 
 #### 3.5.7 Cost
@@ -520,18 +517,18 @@ No budget, licensing model, or spending limit has been provided. In release 1.0,
 
 #### 3.5.8 Deadline
 
-Milestone and release dates have not been defined. Milestone dependencies are: the product owner approves platforms and JDK; the PoC validates critical integrations and cryptographic assumptions; architecture and threat model are then baselined; the release candidate passes functional, integration, negative, performance, and security tests. Release 1.0 readiness criteria are: no unresolved critical vulnerabilities without documented risk acceptance; backup and restore verified; installation, migration, and rollback instructions published; and release approval from the product owner and security specialist.
+Milestone and release dates have not been defined. Milestone dependencies are: supported Windows releases, the autofill browser matrix, and a compatible JDK are selected; the PoC validates critical integrations and cryptographic assumptions; architecture and threat model are then baselined; the release candidate passes functional, integration, negative, and security tests, while responsiveness is assessed in usability testing without a numerical threshold. Release 1.0 readiness criteria are: no unresolved critical vulnerabilities without documented risk acceptance; backup and restore verified; installation, migration, and rollback instructions published; and release approval from the product owner and security specialist.
 
 #### 3.5.9 Proof of Concept
 
 ```markdown
 - ID: REQ-POC-001
 - Title: Validation of critical technical risks
-- Statement: Before the architecture is baselined, the team shall conduct a limited feasibility study of local-vault encryption, password generation, TOTP storage, and safe autofill on the selected platform.
+- Statement: Before the architecture is baselined, the team shall conduct a limited feasibility study of local-vault encryption, password generation, TOTP storage, Guardian two-factor unlock, encrypted backup/restore, and safe autofill on Windows Desktop.
 - Rationale: Autofill and secure secret handling depend on the platform and need early validation.
-- Acceptance Criteria: The PoC is timeboxed to two calendar weeks after platform approval; it demonstrates vault creation/unlock and correct rejection of an incorrect password; test secrets do not appear in plaintext files or logs; autofill refuses an unsuitable source; results, limitations, and a go/revise decision are documented.
+- Acceptance Criteria: The PoC demonstrates vault creation and two-factor unlock; correct rejection of invalid credentials; encrypted backup/restore; test secrets absent from plaintext files and logs; rejection of an unsuitable autofill source; and documented results, limitations, and a go/revise decision. The schedule is set by project planning.
 - Verification Method: Demonstration, analysis.
-- More Information: CON-03, CON-05; results gate the architecture baseline.
+- More Information: CON-01, CON-03, CON-04, CON-08; results gate the architecture baseline.
 ```
 
 #### 3.5.10 Change Management
@@ -580,39 +577,38 @@ Not applicable: no models are deployed, retrained, or monitored.
 
 ## 4. Verification
 
-Each requirement shall be verified on supported target devices, which must be identified before release. Security requirements require both positive and negative scenarios. Test data shall be synthetic and shall not contain real user secrets.
+Each requirement shall be verified on a supported Windows configuration listed in the platform matrix before release. Security requirements require both positive and negative scenarios. Test data shall be synthetic and shall not contain real user secrets.
 
 | Requirement ID | Verification Method | Test / Artifact | Status | Evidence |
 |---|---|---|---|---|
 | REQ-INT-001 | Inspection, functional test | Planned artifact: `tests/verification/REQ-INT-001.md` | Planned | — |
 | REQ-INT-002 | Traffic analysis, inspection | Planned artifact: `tests/verification/REQ-INT-002.md` | Planned | — |
-| REQ-INT-003 | Integration test, demonstration | Planned artifact: `tests/verification/REQ-INT-003.md` | Blocked by platform selection | — |
+| REQ-INT-003 | Integration test, demonstration | Planned artifact: `tests/verification/REQ-INT-003.md` | Blocked by approval of the browser matrix | — |
 | REQ-FUNC-001 | Test, analysis | Planned artifact: `tests/verification/REQ-FUNC-001.md` | Planned | — |
 | REQ-FUNC-002 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-002.md` | Planned | — |
 | REQ-FUNC-003 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-003.md` | Planned | — |
 | REQ-FUNC-004 | Test, analysis | Planned artifact: `tests/verification/REQ-FUNC-004.md` | Planned | — |
 | REQ-FUNC-005 | Test, inspection | Planned artifact: `tests/verification/REQ-FUNC-005.md` | Planned | — |
-| REQ-FUNC-006 | Integration, negative test | Planned artifact: `tests/verification/REQ-FUNC-006.md` | Blocked by platform selection | — |
+| REQ-FUNC-006 | Integration, negative test | Planned artifact: `tests/verification/REQ-FUNC-006.md` | Blocked by approval of the browser matrix | — |
 | REQ-FUNC-007 | Test, analysis | Planned artifact: `tests/verification/REQ-FUNC-007.md` | Planned | — |
 | REQ-FUNC-008 | Test, inspection | Planned artifact: `tests/verification/REQ-FUNC-008.md` | Planned | — |
 | REQ-FUNC-009 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-009.md` | Planned | — |
-| REQ-PERF-001 | Load test | Planned artifact: `tests/verification/REQ-PERF-001.md` | Blocked by target device | — |
-| REQ-PERF-002 | Performance test | Planned artifact: `tests/verification/REQ-PERF-002.md` | Blocked by target device | — |
+| REQ-FUNC-010 | Functional and negative test | Planned artifact: `tests/verification/REQ-FUNC-010.md` | Blocked by MFA-flow approval | — |
 | REQ-SEC-001 | Analysis, inspection | Planned artifact: `tests/verification/REQ-SEC-001.md` | Planned | — |
 | REQ-SEC-002 | Analysis, test | Planned artifact: `tests/verification/REQ-SEC-002.md` | Planned | — |
 | REQ-SEC-003 | Test | Planned artifact: `tests/verification/REQ-SEC-003.md` | Planned | — |
-| REQ-SEC-004 | Integration test | Planned artifact: `tests/verification/REQ-SEC-004.md` | Blocked by platform selection | — |
-| REQ-SEC-005 | Negative test, analysis | Planned artifact: `tests/verification/REQ-SEC-005.md` | Blocked by platform selection | — |
+| REQ-SEC-004 | Windows integration test | Planned artifact: `tests/verification/REQ-SEC-004.md` | Planned | — |
+| REQ-SEC-005 | Negative test, analysis | Planned artifact: `tests/verification/REQ-SEC-005.md` | Blocked by approval of the browser matrix | — |
 | REQ-REL-001 | Fault-tolerance test | Planned artifact: `tests/verification/REQ-REL-001.md` | Planned | — |
 | REQ-REL-002 | Negative test | Planned artifact: `tests/verification/REQ-REL-002.md` | Planned | — |
 | REQ-AVAIL-001 | Isolated-environment test | Planned artifact: `tests/verification/REQ-AVAIL-001.md` | Planned | — |
 | REQ-OBS-001 | Inspection, test | Planned artifact: `tests/verification/REQ-OBS-001.md` | Planned | — |
 | REQ-COMP-001 | Inspection | Planned artifact: `tests/verification/REQ-COMP-001.md` | Planned | — |
 | REQ-COMP-002 | Inspection | Planned artifact: `tests/verification/REQ-COMP-002.md` | Planned | — |
-| REQ-INST-001 | Demonstration, inspection | Planned artifact: `tests/verification/REQ-INST-001.md` | Blocked by platform selection | — |
+| REQ-INST-001 | Demonstration, inspection | Planned artifact: `tests/verification/REQ-INST-001.md` | Blocked by approval of the Windows matrix | — |
 | REQ-BUILD-001 | Inspection, repeat build | Planned artifact: `tests/verification/REQ-BUILD-001.md` | Planned | — |
 | REQ-MAINT-001 | Inspection | Planned artifact: `tests/verification/REQ-MAINT-001.md` | Planned | — |
-| REQ-PORT-001 | Build and test | Planned artifact: `tests/verification/REQ-PORT-001.md` | Blocked by platform selection | — |
+| REQ-PORT-001 | Windows build and test | Planned artifact: `tests/verification/REQ-PORT-001.md` | Blocked by approval of the Windows matrix | — |
 | REQ-POC-001 | Demonstration, analysis | Planned artifact: `tests/verification/REQ-POC-001.md` | Planned | — |
 | REQ-CM-001 | Inspection, analysis | Planned artifact: `tests/verification/REQ-CM-001.md` | Planned | — |
 
@@ -624,14 +620,12 @@ Test paths in the matrix are planned locations: artifacts shall be added to the 
 
 ### 5.1 Open Questions
 
-1. Which platforms are in the first release: desktop, mobile, browser extension, or a combination?
-2. Which supported Java/JDK release is required?
-3. Is two-factor verification for signing in to Guardian itself required, in addition to storing TOTP codes for other services?
-4. Are synchronization, a Guardian account, or moving data between devices required in the first release?
-5. What import/export and compatibility requirements are expected for other password managers?
-6. What are the localization, accessibility, licensing, and applicable-law requirements?
-7. Are the proposed performance targets and automatic-lock timers approved?
+1. Which Windows Desktop releases will be supported, and which browsers will be included in the autofill matrix?
+2. Which independent second factor and secure Guardian account-recovery procedure will be approved?
+3. Which protection method and credentials will be used for the encrypted Guardian backup file, and how will transfer interact with MFA settings?
+4. Which jurisdictions, accessibility requirements, licensing obligations, and software-distribution rules apply to the release?
+5. Who will be appointed product owner and owner of the release security and legal reviews?
 
 ### 5.2 Draft Limitations
 
-This SRS was prepared from a short description: a password manager with password generation and storage, autofill, categories, notes, two-factor authentication, and Java implementation. The platform, distribution model, and specific cryptographic decisions were not provided. Platform requirements and numerical QoS thresholds are therefore preliminary and require agreement with the product owner and a security specialist before the SRS baseline is approved.
+This SRS records the confirmed Windows desktop scope for release 1.0, mandatory 2FA for Guardian, Russian localization, manual encrypted-file transfer between Guardian instances, and Java implementation. Exact Windows releases and browsers, the second-factor and recovery mechanism, backup-file protection, responsible owners, and applicable legal requirements remain open. Numerical performance targets and an automatic-lock timer are not release 1.0 acceptance criteria.
