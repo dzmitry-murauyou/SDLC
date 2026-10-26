@@ -183,11 +183,7 @@ Requirements shall be verifiable, unambiguous, and uniquely identified. “Shall
 
 The interface shall let users manage the vault, records, categories, generator, and TOTP without manually editing files. Secrets shall be masked by default; revealing or copying them shall require an explicit user action. Errors during unlock, save, import/export, and autofill shall explain what happened without displaying secret values. The release 1.0 interface targets Windows 10 and later; keyboard navigation, Windows scaling, and system accessibility features shall be verified in a separate UX specification.
 
-**Graphical specification (SysML v2 and UI mockup):** the figure shows Guardian boundaries, the FIDO2 USB key, browser integration, encrypted-file transfer, and an unlock-screen sketch. It is a conceptual illustration, not final design. Source model: `diagrams/guardian.sysml`.
-
-![Conceptual SysML v2 model and Guardian UI mockup](diagrams/guardian-sysmlv2-overview.png)
-
-*Figure 3.1. Conceptual SysML v2 system context and Guardian sign-in mockup. The interface labels are in Russian, as required for release 1.0.*
+The graphical materials (PNG mockup and SysML v2 source model) are listed in the appendix.
 
 #### 3.1.2 Hardware Interfaces
 
@@ -626,12 +622,5 @@ Test paths in the matrix are planned locations: artifacts shall be added to the 
 ---
 ## 5. Appendixes
 
-### 5.1 Open Questions
-
-1. Which Windows browsers will be included in the autofill matrix? The target OS is confirmed as Windows 10 and later.
-2. Will recovery after losing the USB key use a spare FIDO2 key, another verified process, or both?
-3. Will a second encryption layer for backup files be mandatory, optional, or excluded from release 1.0?
-
-### 5.2 Draft Limitations
-
-This SRS records the confirmed Windows desktop scope for release 1.0, mandatory 2FA for Guardian, Russian localization, manual encrypted-file transfer between Guardian instances, and Java implementation. The browser matrix, recovery after loss of a FIDO2 key, and whether to add a second encryption layer remain open. Legal requirements, licensing, and assignment of owners are deferred until preparation for public release. Numerical performance targets and an automatic-lock timer are not release 1.0 acceptance criteria.
+- [Guardian graphical specification (PNG)](diagrams/guardian-sysmlv2-overview.png)
+- [Guardian source model (SysML v2)](diagrams/guardian.sysml)
