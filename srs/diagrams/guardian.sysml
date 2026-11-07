@@ -27,12 +27,25 @@ package GuardianModel {
 
     part def EncryptedVault {
         attribute encrypted : Boolean = true;
+        attribute walletRecoverySecretsEncrypted : Boolean = true;
+        attribute walletSecretsMaskedByDefault : Boolean = true;
+        attribute walletSecretRevealOrCopyRequiresExplicitAction : Boolean = true;
+    }
+
+    // Conceptual data type only. Its realization as a Vault record or a separate logical module is deferred in ADR-0003.
+    part def CryptoWalletRecord {
+        attribute hasUserProvidedMetadata : Boolean;
+        attribute hasUserProvidedSeedPhrase : Boolean;
+        attribute hasUserProvidedPrivateKey : Boolean;
+        attribute sensitiveSecretsEncrypted : Boolean = true;
+        attribute sensitiveSecretsMaskedByDefault : Boolean = true;
     }
 
     part def GuardianBackupFile {
         attribute encrypted : Boolean = true;
         attribute format : String = "Guardian";
         attribute credential : String = "Guardian master password";
+        attribute includesWalletSecrets : Boolean = true;
         attribute additionalEncryptionLayer : String = "Optional; pending security design";
     }
 
@@ -42,6 +55,7 @@ package GuardianModel {
     part def GuardianDesktopApplication {
         attribute targetOperatingSystem : String = "Windows 10 and later";
         attribute unlockFactors : String = "Guardian master password + FIDO2/WebAuthn USB security key";
+        attribute blockchainAccessEnabled : Boolean = false;
 
         port ui : UserInterfacePort;
         port keyAuthentication : FIDO2AuthenticationPort;
@@ -77,10 +91,34 @@ package GuardianModel {
     }
 
     requirement def GuardianEncryptedBackup {
-        doc /* REQ-FUNC-008: portable Guardian-format backup, encrypted with the Guardian master password. */
+        doc /* REQ-FUNC-008 and REQ-SEC-006: portable encrypted Guardian backup includes protected wallet secrets. */
         subject system : GuardianDesktopApplication;
         require constraint backupIsEncrypted {
-            system.backup.encrypted == true
+            system.backup.encrypted == true and system.backup.includesWalletSecrets == true
+        }
+    }
+
+    requirement def GuardianWalletSecretProtection {
+        doc /* REQ-FUNC-011 and REQ-SEC-006: wallet recovery secrets are encrypted in the local vault. */
+        subject system : GuardianDesktopApplication;
+        require constraint walletSecretsEncrypted {
+            system.vault.walletRecoverySecretsEncrypted == true
+        }
+    }
+
+    requirement def GuardianNoBlockchainOperations {
+        doc /* REQ-INT-004: Guardian 1.0 has no blockchain/RPC access or on-chain operations. */
+        subject system : GuardianDesktopApplication;
+        require constraint blockchainAccessDisabled {
+            system.blockchainAccessEnabled == false
+        }
+    }
+
+    requirement def GuardianExplicitWalletSecretAction {
+        doc /* REQ-FUNC-012: wallet recovery secrets are masked and require an explicit user action to reveal or copy. */
+        subject system : GuardianDesktopApplication;
+        require constraint explicitRevealOrCopy {
+            system.vault.walletSecretsMaskedByDefault == true and system.vault.walletSecretRevealOrCopyRequiresExplicitAction == true
         }
     }
 }

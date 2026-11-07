@@ -1,7 +1,7 @@
 # Software Requirements Specification
-## For Guardian — Password Manager
+## For Guardian — Password and Crypto Wallet Data Manager
 
-Version 0.2<br>
+Version 0.3<br>
 Prepared by Not specified  
 Organization not specified  
 2026-10-26
@@ -38,10 +38,11 @@ Organization not specified
 |------|------|--------------------|---------|
 | Not specified | 2026-10-26 | Initial SRS draft for Guardian | 0.1 |
 | Project team | 2026-10-26 | Confirmed Windows 10+, FIDO2 USB key, master-password backup, and SysML v2 visual specification | 0.2 |
+| Executor | 2026-11-07 | Added local storage of crypto-wallet secrets; blockchain operations excluded from release 1.0 | 0.3 |
 
 ## 1. Introduction
 
-This document specifies the requirements for Guardian, an application for securely managing passwords and related secrets. It defines the intended capabilities, first-release boundaries, constraints, quality attributes, and verification methods; it does not prescribe the internal architecture except for the explicit requirement to use Java. The document is intended for the product owner, developers, testers, and security specialists. Confirmed decisions and remaining assumptions are distinguished in Sections 2.5 and 5.1.
+This document specifies the requirements for Guardian, an application for securely managing passwords, related secrets, and crypto-wallet data, including seed phrases and private keys. It defines the intended capabilities, first-release boundaries, constraints, quality attributes, and verification methods; it does not prescribe the internal architecture except for the explicit requirement to use Java. The document is intended for the product owner, developers, testers, and security specialists. Confirmed decisions and remaining assumptions are distinguished in Sections 2.5 and 5.1.
 
 ### 1.1 Document Purpose
 
@@ -49,11 +50,11 @@ This SRS defines **what** Guardian must do and the criteria for accepting the re
 
 ### 1.2 Product Scope
 
-Guardian (release 1.0) is a Windows desktop password manager targeting Windows 10 and later. It lets users create and store encrypted records containing usernames, passwords, website addresses, notes, and TOTP secrets; organize and search records; generate passwords; and autofill credentials in supported Windows browsers. Unlocking the vault requires a master password and an enrolled FIDO2/WebAuthn USB security key; the application also generates TOTP codes for external services. To recover data or move it between Guardian instances, the user creates an encrypted backup file and stores it independently, including on removable media; Guardian accounts and cloud synchronization are not used. The application shall be implemented in Java, with no specific JDK version mandated by the product owner.
+Guardian (release 1.0) is a Windows desktop password and crypto-wallet data manager targeting Windows 10 and later. In addition to passwords, notes, and TOTP secrets, it stores user-provided wallet seed phrases and private keys in an encrypted local vault; revealing or copying them requires an explicit user action. Access requires the Guardian master password and an enrolled FIDO2/WebAuthn USB security key. Release 1.0 does not connect to blockchain networks, retrieve balances, or sign/broadcast transactions. Encrypted Guardian backups are transferred manually; Guardian accounts and cloud synchronization are not used. The application shall be implemented in Java, with no specific JDK version mandated by the product owner.
 
-**In scope:** a Windows desktop application; a local encrypted vault; mandatory two-factor unlock; password, note, and TOTP-secret records; categories, search, and password generation; autofill in approved Windows browsers; and export/restore of an encrypted Guardian backup for transfer between Guardian instances and storage on removable media.
+**In scope:** a Windows desktop application; a local encrypted vault; mandatory two-factor unlock; password, note, TOTP-secret, and crypto-wallet records containing user-provided seed phrases/private keys and metadata; categories, search, password generation, explicit reveal/copy of secrets, autofill in approved Windows browsers, and export/restore of an encrypted Guardian backup for transfer between Guardian instances and storage on removable media.
 
-**Out of scope for release 1.0:** mobile applications and applications for other operating systems, a Guardian account, cloud or automatic synchronization, shared/enterprise vaults, imports from third-party managers, unencrypted exports to generic formats, operator-assisted secret recovery, and AI features. The exact supported Windows releases and autofill browsers shall be listed in a platform matrix before release.
+**Out of scope for release 1.0:** mobile applications and applications for other operating systems, a Guardian account, cloud or automatic synchronization, shared/enterprise vaults, imports from third-party managers, unencrypted exports to generic formats, blockchain connections, balance retrieval, transaction signing or broadcasting, operator-assisted secret recovery, and AI features. Wallet/key creation or generation and import from external wallet applications are out of scope for release 1.0; any future inclusion requires a separate scope change. The exact supported Windows releases and autofill browsers shall be listed in a platform matrix before release.
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 
@@ -61,6 +62,8 @@ Guardian (release 1.0) is a Windows desktop password manager targeting Windows 1
 |---|---|
 | Autofill | Transfer of credentials selected by the user into a login field on a supported website or application. |
 | Encrypted vault / vault | A set of user records saved in encrypted form. |
+| Crypto wallet | A Guardian user record containing wallet metadata and sensitive recovery data; it performs no blockchain operations in release 1.0. |
+| Seed phrase / private key | A user secret used to recover or access a crypto wallet; Guardian stores it only in encrypted form. |
 | Master password | A secret set by the user to unlock the vault; it must not be stored in plaintext. |
 | TOTP | Time-Based One-Time Password — a one-time code calculated using a secret and the current time. |
 | MFA / 2FA | Multi-factor / two-factor authentication. Guardian requires a master password and a FIDO2/WebAuthn USB security key for unlock; TOTP codes for external accounts are separate. |
@@ -88,7 +91,7 @@ Section 2 defines the product context, user classes, constraints, assumptions, a
 
 ### 2.1 Product Perspective
 
-Guardian is a Windows desktop application for an individual user on Windows 10 and later, replacing password storage in notes, browser forms, and spreadsheets. It stores data locally and interacts with Windows and supported browsers only for autofill, clipboard access, file dialogs, and session locking. There is no network account or synchronization service; the user transfers data using an encrypted Guardian backup file. A product owner and support function must be assigned before release; a network SLA does not apply to the offline product, and support staff must not access secrets.
+Guardian is a Windows desktop application for an individual user on Windows 10 and later, replacing password and crypto-wallet recovery-secret storage in notes and spreadsheets. It stores data locally and interacts with Windows and supported browsers only for autofill, clipboard access, file dialogs, and session locking; it does not access blockchain networks or transaction services. There is no network account or synchronization service; the user transfers data using an encrypted Guardian backup file. A product owner and support function must be assigned before release; a network SLA does not apply to the offline product, and support staff must not access secrets.
 
 ```text
 User ──> Guardian (interface, encrypted vault, generator, TOTP)
@@ -106,6 +109,8 @@ User ──> Guardian (interface, encrypted vault, generator, TOTP)
 - Store TOTP secrets and display current one-time codes.
 - Prevent accidental disclosure through secret masking, automatic locking, and clipboard clearing.
 - Create an encrypted backup file and restore/transfer data between Guardian instances; the user may store the file on removable media.
+- Store user-provided crypto-wallet metadata and seed phrases/private keys in the encrypted local vault.
+- Explicitly reveal or copy a wallet secret after unlock, without blockchain operations.
 
 ### 2.3 Product Constraints
 
@@ -121,6 +126,7 @@ User ──> Guardian (interface, encrypted vault, generator, TOTP)
 | CON-08 | Specific cryptographic algorithms and parameters shall be selected and justified in design documentation using reviewed libraries; custom cryptography is prohibited without a separately approved exception. |
 | CON-09 | Jurisdiction, applicable legal requirements, and licensing obligations shall be identified before public release. |
 | CON-10 | Numerical performance targets and an automatic-lock inactivity interval are not release 1.0 acceptance criteria; they may be defined later from operational experience. |
+| CON-11 | Crypto-wallet functions in release 1.0 are limited to local storage of user-provided metadata, seed phrases, and private keys, plus explicit reveal/copy. Blockchain connections, balance retrieval, transaction signing, and broadcasting are out of scope. Wallet/key creation or generation and import from external wallet applications are out of scope for release 1.0; any future inclusion requires a separate scope change. |
 
 ### 2.4 User Characteristics
 
@@ -144,14 +150,15 @@ The release 1.0 interface and user documentation shall be in Russian only. Guard
 | A-06 | The confirmed Guardian second factor is a FIDO2/WebAuthn USB security key; recovery after losing the key (spare key or another mechanism) has not yet been selected. | Project team / security specialist | Losing the only key may lock out the user. | Approve and verify a secure recovery flow before implementation. |
 | A-07 | Windows system time is accurate enough to generate TOTP codes for external services. | User / platform-integration owner | External services may reject codes when the clock is wrong. | Use Windows system time and inform users of an evident time-synchronization issue. |
 | A-08 | The backup file uses the Guardian password (master password), not a separate backup password; the user may store it on removable media. Whether an additional encryption layer is needed remains to be decided. | Project team / security specialist | Losing the master password may make the backup inaccessible; an extra layer may complicate recovery. | Do not store the password in the file; approve the cryptographic scheme and recovery UX before implementation. |
+| A-09 | In release 1.0 Guardian stores user-provided crypto-wallet metadata and seed phrases/private keys; the detailed UX for entering/viewing/copying them and the internal integration (record type or separate module) require clarification. Wallet/key creation or generation and import from external applications are out of scope. | Product owner / tech lead (to be assigned) | Detailed UX and internal model design require clarification of the user-data workflow and architectural representation. | Clarify the UX and integration model; wallet secrets shall inherit vault and backup protection. |
 
 ### 2.6 Apportioning of Requirements
 
 | Area / Requirements | Subsystem or Increment | Status |
 |---|---|---|
-| REQ-FUNC-001–005, REQ-FUNC-008–010 | Release 1.0: local vault, records, categories, generation, notes, backup, and locking | Planned |
+| REQ-FUNC-001–005, REQ-FUNC-008–012 | Release 1.0: local vault, records, categories, generation, notes, wallets, backup, and locking | Planned |
 | REQ-FUNC-006–007, REQ-INT-003, REQ-SEC-005 | Release 1.0: autofill and TOTP for supported Windows browsers | Approve browser matrix |
-| REQ-SEC-001–005, REQ-REL-001–002 | Release 1.0: data protection, MFA, locking, and recovery | Mandatory for release |
+| REQ-SEC-001–006, REQ-REL-001–002 | Release 1.0: data and crypto-wallet-secret protection, MFA, locking, and recovery | Mandatory for release |
 | REQ-INT-001–003, REQ-OBS-001 | Release 1.0: Windows interface, integrations, and safe diagnostics | Planned |
 | REQ-AVAIL-001, REQ-COMP-001–002, REQ-INST-001, REQ-BUILD-001, REQ-MAINT-001, REQ-PORT-001, REQ-POC-001, REQ-CM-001 | Release 1.0: release readiness, operations, and proof of feasibility | Project decisions required |
 | Automatic/cloud synchronization, accounts, sharing, other OSs, AI | Potential future releases | Out of scope for release 1.0; separate change requests |
@@ -181,7 +188,7 @@ Requirements shall be verifiable, unambiguous, and uniquely identified. “Shall
 
 #### 3.1.1 User Interfaces
 
-The interface shall let users manage the vault, records, categories, generator, and TOTP without manually editing files. Secrets shall be masked by default; revealing or copying them shall require an explicit user action. Errors during unlock, save, import/export, and autofill shall explain what happened without displaying secret values. The release 1.0 interface targets Windows 10 and later; keyboard navigation, Windows scaling, and system accessibility features shall be verified in a separate UX specification.
+The interface shall let users manage the vault, records, categories, generator, TOTP, and crypto-wallet data without manually editing files. Passwords, seed phrases, and private keys remain masked by default; revealing or copying them requires an explicit user action. Errors during unlock, save, import/export, and autofill shall explain what happened without displaying secret values. The release 1.0 interface targets Windows 10 and later; keyboard navigation, Windows scaling, and system accessibility features shall be verified in a separate UX specification.
 
 The graphical materials (PNG mockup and SysML v2 source model) are listed in the appendix.
 
@@ -192,7 +199,8 @@ Guardian shall support a FIDO2/WebAuthn USB security key for unlock. Installatio
 #### 3.1.3 Software Interfaces
 
 - Interaction with Windows browsers for autofill is permitted only through a supported and documented integration interface.
-- The record format shall support a title, username, password, URL/source identifier, categories, notes, and optional TOTP data.
+- The ordinary record format shall support a title, username, password, URL/source identifier, categories, notes, and optional TOTP data; the crypto-wallet record format and choice between record type and separate module require a design decision.
+- Crypto-wallet data operations are local; blockchain nodes, external RPC/API, balance services, and transaction services are out of scope for release 1.0.
 - An external network API, cloud synchronization, and third-party analytics SDKs are outside the scope of version 1.0.
 
 ```markdown
@@ -223,6 +231,18 @@ Guardian shall support a FIDO2/WebAuthn USB security key for unlock. Installatio
 - Acceptance Criteria: An integration test confirms that only selected fields are transferred and that unsupported or mismatched contexts are rejected.
 - Verification Method: Integration test, demonstration.
 - More Information: CON-01, assumption A-04; related: REQ-FUNC-006, REQ-SEC-005.
+```
+
+
+
+```markdown
+- ID: REQ-INT-004
+- Title: Local-only crypto-wallet operations
+- Statement: In release 1.0, crypto-wallet data storage, viewing, and copying shall be local; the system shall not connect to blockchain networks/RPC services, retrieve balances, sign, or broadcast transactions.
+- Rationale: The release is limited to secure storage of user-provided wallet secrets rather than transaction management.
+- Acceptance Criteria: Network-traffic analysis during wallet operations shows no request to blockchain/RPC/balance/transaction services; the UI provides no balance retrieval, signing, or transaction broadcast action.
+- Verification Method: Traffic analysis, UI inspection.
+- More Information: CON-11; related: REQ-FUNC-011–012 and REQ-SEC-006.
 ```
 
 ### 3.2 Functional
@@ -327,6 +347,28 @@ Guardian shall support a FIDO2/WebAuthn USB security key for unlock. Installatio
 - More Information: CON-04; assumption A-06; the second-factor type is confirmed; recovery after key loss remains to be decided.
 ```
 
+
+
+```markdown
+- ID: REQ-FUNC-011
+- Title: Local crypto-wallet records
+- Statement: The system shall store user-provided crypto-wallet metadata and a seed phrase or private key in the encrypted local Guardian vault.
+- Rationale: The user needs a secure place to store crypto-wallet data alongside other personal secrets.
+- Acceptance Criteria: Wallet data are available only after Guardian is unlocked; the user-provided secret is preserved in and restored from a Guardian backup; the exact metadata and presentation are defined in the design without network operations.
+- Verification Method: Functional test, format inspection.
+- More Information: CON-03, CON-05, CON-11, A-09; the integration model (record type or separate module) is not yet selected.
+```
+
+```markdown
+- ID: REQ-FUNC-012
+- Title: Explicit reveal and copy of wallet secrets
+- Statement: The system shall mask seed phrases and private keys by default and shall allow them to be revealed or copied only after an explicit user action while the vault is unlocked.
+- Rationale: A seed phrase or private key may provide critical access to crypto assets and must not be exposed accidentally.
+- Acceptance Criteria: The secret is absent from lists and search results; reveal and copy require separate explicit actions; locking makes the secret unavailable; copy follows REQ-SEC-004 and is cleared on lock when Windows permits.
+- Verification Method: Functional and negative tests, inspection.
+- More Information: CON-03, CON-11; related: REQ-SEC-006 and REQ-SEC-004.
+```
+
 ### 3.3 Quality of Service
 
 #### 3.3.1 Performance
@@ -383,6 +425,18 @@ No numerical performance targets or response-time acceptance criteria are set fo
 - Acceptance Criteria: Exact matches are allowed; lookalike domains, different ports or schemes, unknown domains, and ambiguous URLs are rejected; subdomains are not automatically treated as matches; negative tests confirm rejection in every disallowed case.
 - Verification Method: Negative test, analysis.
 - More Information: CON-01, A-04; related: REQ-FUNC-006, REQ-INT-003.
+```
+
+
+
+```markdown
+- ID: REQ-SEC-006
+- Title: Crypto-wallet secret protection
+- Statement: The system shall encrypt crypto-wallet seed phrases and private keys in the local vault and backup using the same approved protection mechanism as other Guardian secrets; these values shall not appear in logs, diagnostics, search, or network requests.
+- Rationale: Disclosure of a seed phrase or private key may irreversibly compromise control of crypto assets.
+- Acceptance Criteria: Inspection of vault/backup files and logs finds no plaintext seed phrase or private key; an incorrect unlock does not reveal the secret; network analysis shows no wallet-secret transmission; screen reveal is available only after MFA.
+- Verification Method: Analysis, inspection, negative test.
+- More Information: CON-03, CON-08, CON-11; related: REQ-FUNC-011–012, REQ-OBS-001, and REQ-INT-004.
 ```
 
 #### 3.3.3 Reliability
@@ -528,11 +582,11 @@ Milestone and release dates have not been defined. Milestone dependencies are: s
 ```markdown
 - ID: REQ-POC-001
 - Title: Validation of critical technical risks
-- Statement: Before the architecture is baselined, the team shall conduct a limited feasibility study of local-vault encryption, password generation, TOTP storage, unlock with a FIDO2/WebAuthn USB key, encrypted backup/restore, and safe autofill on Windows 10 and later.
+- Statement: Before the architecture is baselined, the team shall conduct a limited feasibility study of local-vault and wallet-secret encryption, explicit seed/private-key reveal and copy, password generation, TOTP storage, unlock with a FIDO2/WebAuthn USB key, encrypted backup/restore, and safe autofill on Windows 10 and later.
 - Rationale: Autofill and secure secret handling depend on the platform and need early validation.
-- Acceptance Criteria: The PoC demonstrates vault creation and two-factor unlock; correct rejection of invalid credentials; encrypted backup/restore; test secrets absent from plaintext files and logs; rejection of an unsuitable autofill source; and documented results, limitations, and a go/revise decision. The schedule is set by project planning.
+- Acceptance Criteria: The PoC demonstrates vault creation and two-factor unlock; correct rejection of invalid credentials; encrypted backup/restore including wallet secrets; test passwords, seed phrases, and private keys absent from plaintext files, logs, and network traffic; wallet-secret reveal/copy only after unlock; no blockchain/RPC requests; rejection of an unsuitable autofill source; and documented results, limitations, and a go/revise decision. The schedule is set by project planning.
 - Verification Method: Demonstration, analysis.
-- More Information: CON-01, CON-03, CON-04, CON-08; results gate the architecture baseline.
+- More Information: CON-01, CON-03, CON-04, CON-08, CON-11; related: REQ-FUNC-011–012, REQ-SEC-006, REQ-INT-004; results gate the architecture baseline.
 ```
 
 #### 3.5.10 Change Management
@@ -588,6 +642,7 @@ Each requirement shall be verified on a supported Windows 10 and later configura
 | REQ-INT-001 | Inspection, functional test | Planned artifact: `tests/verification/REQ-INT-001.md` | Planned | — |
 | REQ-INT-002 | Traffic analysis, inspection | Planned artifact: `tests/verification/REQ-INT-002.md` | Planned | — |
 | REQ-INT-003 | Integration test, demonstration | Planned artifact: `tests/verification/REQ-INT-003.md` | Blocked by approval of the browser matrix | — |
+| REQ-INT-004 | Traffic analysis, UI inspection | Planned artifact: `tests/verification/REQ-INT-004.md` | Planned | — |
 | REQ-FUNC-001 | Test, analysis | Planned artifact: `tests/verification/REQ-FUNC-001.md` | Planned | — |
 | REQ-FUNC-002 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-002.md` | Planned | — |
 | REQ-FUNC-003 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-003.md` | Planned | — |
@@ -598,11 +653,14 @@ Each requirement shall be verified on a supported Windows 10 and later configura
 | REQ-FUNC-008 | Test, inspection | Planned artifact: `tests/verification/REQ-FUNC-008.md` | Planned | — |
 | REQ-FUNC-009 | Functional test | Planned artifact: `tests/verification/REQ-FUNC-009.md` | Planned | — |
 | REQ-FUNC-010 | Functional and negative test | Planned artifact: `tests/verification/REQ-FUNC-010.md` | Blocked by MFA-flow approval | — |
+| REQ-FUNC-011 | Functional test, format inspection | Planned artifact: `tests/verification/REQ-FUNC-011.md` | Planned | — |
+| REQ-FUNC-012 | Functional and negative tests | Planned artifact: `tests/verification/REQ-FUNC-012.md` | Planned | — |
 | REQ-SEC-001 | Analysis, inspection | Planned artifact: `tests/verification/REQ-SEC-001.md` | Planned | — |
 | REQ-SEC-002 | Analysis, test | Planned artifact: `tests/verification/REQ-SEC-002.md` | Planned | — |
 | REQ-SEC-003 | Test | Planned artifact: `tests/verification/REQ-SEC-003.md` | Planned | — |
 | REQ-SEC-004 | Windows integration test | Planned artifact: `tests/verification/REQ-SEC-004.md` | Planned | — |
 | REQ-SEC-005 | Negative test, analysis | Planned artifact: `tests/verification/REQ-SEC-005.md` | Blocked by approval of the browser matrix | — |
+| REQ-SEC-006 | Analysis, inspection, negative test | Planned artifact: `tests/verification/REQ-SEC-006.md` | Planned | — |
 | REQ-REL-001 | Fault-tolerance test | Planned artifact: `tests/verification/REQ-REL-001.md` | Planned | — |
 | REQ-REL-002 | Negative test | Planned artifact: `tests/verification/REQ-REL-002.md` | Planned | — |
 | REQ-AVAIL-001 | Isolated-environment test | Planned artifact: `tests/verification/REQ-AVAIL-001.md` | Planned | — |
