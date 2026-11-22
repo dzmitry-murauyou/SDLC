@@ -60,8 +60,8 @@ def usecase_ellipse(cx, cy, rx, ry, label, optional=False):
 
 
 def diagram_usecase():
-    w,h=1800,1410; a=svg_start(w,h,"Диаграмма вариантов использования Guardian")
-    a.append(text(w/2,78,"Базовые прецеденты SRS; Change-01 вынесен за границу базового объёма",17,fill="#566579"))
+    w,h=1800,1210; a=svg_start(w,h,"Диаграмма вариантов использования Guardian")
+    a.append(text(w/2,78,"Актёры и цели локального приложения",17,fill="#566579"))
     a.append('<rect x="300" y="120" width="1120" height="1050" rx="18" fill="#fff" stroke="#26364a" stroke-width="3"/>')
     a.append(text(860,155,"Guardian 1.0 — локальное настольное приложение",21,weight="700"))
     centers=[200+i*100 for i in range(10)]
@@ -76,8 +76,6 @@ def diagram_usecase():
     a.append('<path d="M 1480 803 L 1450 803 L 1450 1100 L 1120 1100" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
     for cy in (900,1000):
         a.append(f'<path d="M 1480 1033 L 1450 1033 L 1450 {cy} L 1120 {cy}" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
-    # Optional educational scenario is outside the base product boundary.
-    a.append('<path d="M 185 653 L 220 653 L 220 1300 L 580 1300" fill="none" stroke="#b56a12" stroke-width="1.8" stroke-dasharray="9 7"/>')
     cases=[
       (200,["UC-01 Создать хранилище и", "зарегистрировать первичный ключ"]),
       (300,["UC-02 Разблокировать хранилище"]),
@@ -96,9 +94,6 @@ def diagram_usecase():
     a.append(actor(1510,500,"Браузер",["Утверждённый","браузер Windows"]))
     a.append(actor(1510,800,"Windows"))
     a.append(actor(1510,1030,"Файловая система",["Файловая система /","внешний накопитель"]))
-    a.append('<rect x="345" y="1210" width="1030" height="155" rx="16" fill="#fff8ed" stroke="#b56a12" stroke-width="2.5" stroke-dasharray="10 8"/>')
-    a.append(text(860,1242,"Отдельный учебный сценарий (не входит в базовый SRS)",17,weight="700",fill="#8a4b08"))
-    a.append(usecase_ellipse(850,1300,390,40,["UC-11 Change-01: регистрация запасного FIDO2-ключа"],optional=True))
     a.append('</svg>')
     return ''.join(a)
 
@@ -121,16 +116,24 @@ def arrow(x1,y1,x2,y2,label=None,lx=None,ly=None,dashed=False):
     return out
 
 
+def orth_arrow(points,label=None,lx=None,ly=None,dashed=False):
+    d=' '.join((('M' if i==0 else 'L')+f' {x} {y}') for i,(x,y) in enumerate(points))
+    dash=' stroke-dasharray="7 5"' if dashed else ''
+    out=f'<path d="{d}" fill="none" stroke="#26364a" stroke-width="2" marker-end="url(#arrow)"{dash}/>'
+    if label: out+=text(lx if lx is not None else points[len(points)//2][0],ly if ly is not None else points[len(points)//2][1]-8,label,15,weight="600",fill="#40536a")
+    return out
+
+
 def diagram_activity():
-    w,h=1500,1900; a=svg_start(w,h,"Диаграмма активности: разблокировка и работа с wallet-secret")
-    a.append(text(w/2,78,"Основной поток с негативной ветвью; секрет раскрывается только по явной команде",17,fill="#566579"))
-    top,bottom=125,1835
+    w,h=1500,1940; a=svg_start(w,h,"Диаграмма активности: разблокировка и работа с wallet-secret")
+    a.append(text(w/2,78,"Поток разблокировки и явной работы с wallet-secret",17,fill="#566579"))
+    top,bottom=125,1885
     lanes=[(0,420,"Пользователь"),(420,1040,"Guardian"),(1040,1500,"USB-ключ FIDO2")]
     for x1,x2,label in lanes:
         a.append(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" fill="#fbfcfe" stroke="#b7c2cf" stroke-width="1.4"/>')
         a.append(text((x1+x2)/2,118,label,18,weight="700",fill="#26364a"))
     nodes=[
-      ('start',625,150,50,30,[]),
+      ('start',160,150,50,30,[]),
       ('action',85,220,250,70,['Запустить Guardian']),
       ('action',85,335,250,82,['Ввести мастер-пароль']),
       ('action',585,455,310,82,['Проверить мастер-пароль']),
@@ -139,35 +142,36 @@ def diagram_activity():
       ('action',585,825,310,82,['Проверить ответ ключа']),
       ('decision',630,945,220,115,['Оба фактора','корректны?']),
       ('action',585,1100,310,82,['Открыть локальное','хранилище']),
-      ('action',85,1210,250,82,['Выбрать wallet-запись']),
-      ('action',85,1320,250,82,['Явно запросить','просмотр / копирование']),
-      ('action',585,1320,310,82,['Временно показать','или скопировать секрет']),
-      ('action',85,1480,250,82,['Запросить блокировку','или заблокировать Windows']),
-      ('action',585,1600,310,90,['Скрыть секреты; очистить','clipboard, если возможно']),
-      ('end',625,1780,50,35,[]),
+      ('action',85,1270,250,82,['Выбрать wallet-запись']),
+      ('action',85,1380,250,82,['Явно запросить','просмотр / копирование']),
+      ('action',585,1380,310,82,['Временно показать','или скопировать секрет']),
+      ('action',85,1540,250,82,['Запросить блокировку','или заблокировать Windows']),
+      ('action',585,1660,310,90,['Скрыть секреты; очистить','clipboard, если возможно']),
+      ('end',625,1830,50,35,[]),
       ('action',85,1080,250,82,['Оставить Locked;','нейтральная ошибка'],'#fff3f0'),
-      ('end',355,1170,50,35,[]),
+      ('end',160,1200,50,35,[]),
     ]
     for nd in nodes:
         typ,x,y,ww,hh,lab,*rest=nd
         fill=rest[0] if rest else '#f4f8fc'
         a.append(node(x,y,ww,hh,lab,typ,fill))
-    a.append(arrow(650,180,210,220))
-    a.append(arrow(210,290,210,335))
-    a.append(arrow(335,376,585,496))
-    a.append(arrow(740,537,740,575))
-    a.append(arrow(895,616,1105,741))
-    a.append(arrow(1105,741,895,866))
-    a.append(arrow(740,907,740,945))
-    a.append(arrow(740,1060,740,1100,'да',785,1084))
-    a.append(arrow(630,1002,335,1121,'нет',460,1035))
-    a.append(arrow(210,1162,380,1170))
-    a.append(arrow(585,1141,335,1250))
-    a.append(arrow(210,1292,210,1320))
-    a.append(arrow(335,1361,585,1361))
-    a.append(arrow(585,1402,335,1521))
-    a.append(arrow(335,1521,585,1645))
-    a.append(arrow(740,1690,650,1780))
+    # Orthogonal connectors keep the paths aligned with the activity lanes.
+    a.append(orth_arrow([(185,180),(185,200),(210,200),(210,220)]))
+    a.append(orth_arrow([(210,290),(210,335)]))
+    a.append(orth_arrow([(335,376),(450,376),(450,496),(585,496)]))
+    a.append(orth_arrow([(740,537),(740,575)]))
+    a.append(orth_arrow([(895,616),(1000,616),(1000,741),(1105,741)]))
+    a.append(orth_arrow([(1105,741),(1000,741),(1000,866),(895,866)]))
+    a.append(orth_arrow([(740,907),(740,945)]))
+    a.append(orth_arrow([(740,1060),(740,1100)],'да',780,1080))
+    a.append(orth_arrow([(630,1002),(500,1002),(500,1121),(335,1121)],'нет',460,1035))
+    a.append(orth_arrow([(210,1162),(210,1180),(185,1180),(185,1200)]))
+    a.append(orth_arrow([(585,1141),(450,1141),(450,1311),(335,1311)]))
+    a.append(orth_arrow([(210,1352),(210,1380)]))
+    a.append(orth_arrow([(335,1421),(585,1421)]))
+    a.append(orth_arrow([(585,1421),(450,1421),(450,1581),(335,1581)]))
+    a.append(orth_arrow([(210,1622),(450,1622),(450,1705),(585,1705)]))
+    a.append(orth_arrow([(740,1750),(740,1790),(650,1790),(650,1830)]))
     a.append('</svg>')
     return ''.join(a)
 
@@ -178,7 +182,7 @@ def state_box(x,y,w,h,label,fill='#f4f8fc'):
 
 def diagram_state():
     w,h=1500,900; a=svg_start(w,h,"Диаграмма состояний локального Vault")
-    a.append(text(w/2,78,"Показан жизненный цикл доступа; экспорт и восстановление — отдельные прецеденты",17,fill="#566579"))
+    a.append(text(w/2,78,"Жизненный цикл доступа к локальному хранилищу",17,fill="#566579"))
     # Edges behind states
     a.append(arrow(100,425,205,425))
     a.append(arrow(410,425,515,425,label="создать Vault",lx=465,ly=360))
@@ -197,17 +201,12 @@ def diagram_state():
     a.append(state_box(1135,635,220,90,["Unlocked"], '#eef8f0'))
     a.append(state_box(625,635,215,90,["Locking"], '#f4f8fc'))
     # setup cancellation link
-    a.append('<path d="M 610 385 C 610 250 300 250 300 385" fill="none" stroke="#68778a" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#openArrow)"/>')
+    a.append('<path d="M 610 385 L 610 280 L 300 280 L 300 385" fill="none" stroke="#68778a" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#openArrow)"/>')
     a.append(text(455,238,"отмена / ошибка настройки",15,fill="#566579"))
     # terminal marker
     a.append('<path d="M 835 475 L 835 810 L 730 810" fill="none" stroke="#26364a" stroke-width="1.8" marker-end="url(#arrow)"/>')
     a.append('<circle cx="700" cy="810" r="17" fill="#fff" stroke="#26364a" stroke-width="3"/><circle cx="700" cy="810" r="11" fill="#26364a"/>')
     a.append(text(860,835,"выход приложения",15,fill="#566579"))
-    # notes
-    a.append('<rect x="90" y="770" width="450" height="78" rx="10" fill="#fff8ed" stroke="#d9a45b" stroke-width="1.7"/>')
-    a.append(lines_text(315,800,["Секреты остаются замаскированы до явного действия.","Тайм-аут бездействия не добавляется: его нет в базовом SRS."],14,20))
-    a.append('<rect x="970" y="770" width="450" height="78" rx="10" fill="#fff8ed" stroke="#d9a45b" stroke-width="1.7"/>')
-    a.append(lines_text(1195,800,["Change-01 (запасной ключ) — отдельный учебный сценарий.","Он не расширяет базовую модель состояний без обновления SRS."],14,20))
     a.append('</svg>')
     return ''.join(a)
 
@@ -227,7 +226,7 @@ def msg(x1,x2,y,label,reply=False):
 
 def diagram_sequence():
     w,h=1800,1240; a=svg_start(w,h,"Диаграмма последовательности: разблокировка Vault")
-    a.append(text(w/2,78,"Успешный поток и альтернативный отказ; криптографические параметры остаются за ADR-0002",17,fill="#566579"))
+    a.append(text(w/2,78,"Обмен сообщениями при двухфакторной разблокировке Vault",17,fill="#566579"))
     xs=[145,430,715,1000,1285,1570]
     names=[['Пользователь'],['Guardian UI'],['VaultService'],['FIDO2Adapter'],['USB-ключ'],['CryptoProvider /','VaultStore']]
     for x,n in zip(xs,names):a.append(participant(x,n,bottom=1095))
@@ -259,8 +258,6 @@ def diagram_sequence():
     a.append(text(810,987,"else: неверный фактор / отмена / ошибка",15,anchor="start",fill="#8b3a31"))
     a.append(msg(715,430,1015,'genericFailure; state = Locked',True))
     a.append(msg(430,145,1045,'Показать нейтральную ошибку',True))
-    a.append('<rect x="120" y="1110" width="1560" height="64" rx="10" fill="#fff8ed" stroke="#d9a45b" stroke-width="1.5"/>')
-    a.append(lines_text(900,1135,["В базовой модели любой отказ оставляет Vault в Locked. Учебный Change-01 о запасном ключе здесь не моделируется;", "доступ всё равно требует мастер-пароль и один из ключей, если изменение будет отдельно утверждено."],14,19))
     a.append('</svg>')
     return ''.join(a)
 

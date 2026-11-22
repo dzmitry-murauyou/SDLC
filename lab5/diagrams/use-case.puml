@@ -20,7 +20,6 @@ rectangle "Guardian 1.0 — локальное приложение" {
   usecase "UC-09\nВосстановить\nкопию" as UC09
   usecase "UC-10\nЗаблокировать\nхранилище" as UC10
 }
-usecase "UC-11 Change-01\nЗапасной FIDO2-ключ\n(учебный сценарий)" as UC11
 User -- UC01
 User -- UC02
 User -- UC03
@@ -31,15 +30,10 @@ User -- UC07
 User -- UC08
 User -- UC09
 User -- UC10
-User -- UC11
 Key -- UC01
 Key -- UC02
 Browser -- UC07
 Win -- UC10
 FS -- UC08
 FS -- UC09
-note bottom of UC11
-Этот вариант использования вынесен за границу базового Guardian 1.0.
-До обновления SRS это только учебный сценарий.
-end note
 @enduml

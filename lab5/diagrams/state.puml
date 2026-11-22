@@ -11,14 +11,4 @@ Authenticating --> Locked : [invalid factor / cancel / error]
 Unlocked --> Locking : user lock / Windows session lock or exit
 Locking --> Locked : hide secrets, revoke UI access, clear clipboard if supported
 Locked --> [*] : application exit
-note right of Unlocked
-Wallet secrets remain masked until
-an explicit reveal/copy action.
-No idle timeout is assumed by base SRS.
-end note
-note bottom of Locked
-Backup/restore are separate use cases;
-they are not additional vault states.
-Change-01 (spare key) is not in the base SRS.
-end note
 @enduml
