@@ -1,0 +1,29 @@
+@startuml
+skinparam shadowing false
+autonumber
+actor "Пользователь" as User
+boundary "Guardian UI" as UI
+control "VaultService" as Vault
+control "CredentialVerifier" as Verify
+control "FIDO2Adapter" as Fido
+actor "USB-ключ" as Key
+control "CryptoProvider / VaultStore" as Store
+User -> UI : Ввести мастер-пароль
+UI -> Vault : unlock(masterPassword)
+Vault -> Verify : verifyMaster(masterPassword)
+Verify --> Vault : passwordValid
+Vault -> Fido : requestAssertion(challenge)
+Fido -> Key : challenge
+User -> Key : Подтвердить касанием
+Key --> Fido : signedAssertion
+Fido --> Vault : assertionValid
+alt оба фактора корректны
+  Vault -> Store : openEncryptedVault()
+  Store --> Vault : vaultReady
+  Vault --> UI : state = Unlocked
+  UI --> User : Показать список записей
+else неверный фактор / отмена / ошибка
+  Vault --> UI : genericFailure; state = Locked
+  UI --> User : Нейтральное сообщение без секретов
+end
+@enduml

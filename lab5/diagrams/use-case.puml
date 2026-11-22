@@ -1,0 +1,45 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+actor "Пользователь" as User
+actor "USB-ключ\nFIDO2/WebAuthn" as Key
+actor "Утверждённый\nбраузер Windows" as Browser
+actor "Windows" as Win
+actor "Файловая система /\nвнешний накопитель" as FS
+rectangle "Guardian 1.0 — локальное приложение" {
+  usecase "UC-01\nСоздать хранилище и\nзарегистрировать ключ" as UC01
+  usecase "UC-02\nРазблокировать\nхранилище" as UC02
+  usecase "UC-03\nУправлять обычными\nзаписями" as UC03
+  usecase "UC-04\nСгенерировать пароль" as UC04
+  usecase "UC-05\nПросмотреть TOTP-код" as UC05
+  usecase "UC-06\nХранить / явно раскрыть\nwallet-secret" as UC06
+  usecase "UC-07\nБезопасно заполнить\nзапись в браузере" as UC07
+  usecase "UC-08\nСоздать зашифрованную\nкопию" as UC08
+  usecase "UC-09\nВосстановить\nкопию" as UC09
+  usecase "UC-10\nЗаблокировать\nхранилище" as UC10
+}
+usecase "UC-11 Change-01\nЗапасной FIDO2-ключ\n(учебный сценарий)" as UC11
+User -- UC01
+User -- UC02
+User -- UC03
+User -- UC04
+User -- UC05
+User -- UC06
+User -- UC07
+User -- UC08
+User -- UC09
+User -- UC10
+User -- UC11
+Key -- UC01
+Key -- UC02
+Browser -- UC07
+Win -- UC10
+FS -- UC08
+FS -- UC09
+note bottom of UC11
+Этот вариант использования вынесен за границу базового Guardian 1.0.
+До обновления SRS это только учебный сценарий.
+end note
+@enduml
