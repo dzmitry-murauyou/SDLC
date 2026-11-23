@@ -7,14 +7,13 @@ ROOT = Path(__file__).resolve().parents[1] / "diagrams"
 ROOT.mkdir(parents=True, exist_ok=True)
 
 
-def svg_start(w, h, title):
+def svg_start(w, h):
     return [f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">
 <defs>
   <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#26364a"/></marker>
   <marker id="openArrow" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#48576a" stroke-width="1.5"/></marker>
   <style>
     text {{ font-family: Arial, 'DejaVu Sans', sans-serif; fill: #182230; }}
-    .title {{ font-size: 30px; font-weight: 700; }}
     .subtitle {{ font-size: 17px; fill: #566579; }}
     .lane {{ font-size: 20px; font-weight: 700; fill: #26364a; }}
     .label {{ font-size: 18px; }}
@@ -23,7 +22,6 @@ def svg_start(w, h, title):
   </style>
 </defs>
 <rect width="100%" height="100%" fill="#ffffff"/>
-<text x="{w/2}" y="48" text-anchor="middle" class="title">{escape(title)}</text>
 ''']
 
 
@@ -60,8 +58,7 @@ def usecase_ellipse(cx, cy, rx, ry, label, optional=False):
 
 
 def diagram_usecase():
-    w,h=1800,1210; a=svg_start(w,h,"Диаграмма вариантов использования Guardian")
-    a.append(text(w/2,78,"Актёры и цели локального приложения",17,fill="#566579"))
+    w,h=1800,1210; a=svg_start(w,h)
     a.append('<rect x="300" y="120" width="1120" height="1050" rx="18" fill="#fff" stroke="#26364a" stroke-width="3"/>')
     a.append(text(860,155,"Guardian 1.0 — локальное настольное приложение",21,weight="700"))
     centers=[200+i*100 for i in range(10)]
@@ -125,8 +122,7 @@ def orth_arrow(points,label=None,lx=None,ly=None,dashed=False):
 
 
 def diagram_activity():
-    w,h=1500,1940; a=svg_start(w,h,"Диаграмма активности: разблокировка и работа с wallet-secret")
-    a.append(text(w/2,78,"Поток разблокировки и явной работы с wallet-secret",17,fill="#566579"))
+    w,h=1500,1940; a=svg_start(w,h)
     top,bottom=125,1885
     lanes=[(0,420,"Пользователь"),(420,1040,"Guardian"),(1040,1500,"USB-ключ FIDO2")]
     for x1,x2,label in lanes:
@@ -181,8 +177,7 @@ def state_box(x,y,w,h,label,fill='#f4f8fc'):
 
 
 def diagram_state():
-    w,h=1500,900; a=svg_start(w,h,"Диаграмма состояний локального Vault")
-    a.append(text(w/2,78,"Жизненный цикл доступа к локальному хранилищу",17,fill="#566579"))
+    w,h=1500,900; a=svg_start(w,h)
     # Edges behind states
     a.append(arrow(100,425,205,425))
     a.append(arrow(410,425,515,425,label="создать Vault",lx=465,ly=360))
@@ -225,8 +220,7 @@ def msg(x1,x2,y,label,reply=False):
 
 
 def diagram_sequence():
-    w,h=1800,1240; a=svg_start(w,h,"Диаграмма последовательности: разблокировка Vault")
-    a.append(text(w/2,78,"Обмен сообщениями при двухфакторной разблокировке Vault",17,fill="#566579"))
+    w,h=1800,1240; a=svg_start(w,h)
     xs=[145,430,715,1000,1285,1570]
     names=[['Пользователь'],['Guardian UI'],['VaultService'],['FIDO2Adapter'],['USB-ключ'],['CryptoProvider /','VaultStore']]
     for x,n in zip(xs,names):a.append(participant(x,n,bottom=1095))
