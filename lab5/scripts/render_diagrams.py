@@ -38,14 +38,14 @@ def lines_text(x, y, lines, size=17, line=22, anchor="middle", weight="400", fil
     return ''.join(out)
 
 
-def actor(cx, cy, label, lines=()):
+def actor(cx, cy, label, lines=(), label_dx=0, label_size=16):
     out = [f'<circle cx="{cx}" cy="{cy-35}" r="18" fill="#fff" stroke="#26364a" stroke-width="3"/>',
            f'<line x1="{cx}" y1="{cy-17}" x2="{cx}" y2="{cy+35}" stroke="#26364a" stroke-width="3"/>',
            f'<line x1="{cx-30}" y1="{cy+3}" x2="{cx+30}" y2="{cy+3}" stroke="#26364a" stroke-width="3"/>',
            f'<line x1="{cx}" y1="{cy+35}" x2="{cx-25}" y2="{cy+70}" stroke="#26364a" stroke-width="3"/>',
            f'<line x1="{cx}" y1="{cy+35}" x2="{cx+25}" y2="{cy+70}" stroke="#26364a" stroke-width="3"/>']
     label_lines = list(lines) if lines else [label]
-    out.append(lines_text(cx, cy+98, label_lines, 16, 19, weight="700"))
+    out.append(lines_text(cx+label_dx, cy+98, label_lines, label_size, 19, weight="700"))
     return ''.join(out)
 
 
@@ -87,10 +87,10 @@ def diagram_usecase():
     ]
     for cy,lab in cases:a.append(usecase_ellipse(850,cy,270,34,lab))
     a.append(actor(150,650,"Пользователь"))
-    a.append(actor(1620,240,"USB-ключ",["USB-ключ","FIDO2/WebAuthn"]))
-    a.append(actor(1620,500,"Браузер",["Утверждённый","браузер Windows"]))
-    a.append(actor(1620,800,"Windows"))
-    a.append(actor(1620,1030,"Файловая система",["Файловая система /","внешний накопитель"]))
+    a.append(actor(1620,240,"USB-ключ",["USB-ключ","FIDO2/WebAuthn"],label_dx=55,label_size=14))
+    a.append(actor(1620,500,"Браузер",["Утверждённый","браузер Windows"],label_dx=55,label_size=14))
+    a.append(actor(1620,800,"Windows",label_dx=55,label_size=14))
+    a.append(actor(1620,1030,"Файловая система",["Файловая система /","внешний накопитель"],label_dx=55,label_size=14))
     a.append('</svg>')
     return ''.join(a)
 
@@ -188,8 +188,8 @@ def diagram_state():
     a.append(arrow(1040,425,1135,425,label="запрос разблокировки",lx=1090,ly=360))
     a.append(arrow(1245,475,1245,635,label="оба фактора верны",lx=1350,ly=560))
     a.append(arrow(1135,450,1040,450,label="ошибка / отмена",lx=1090,ly=510))
-    a.append(arrow(1135,675,840,675,label="ручная / Windows-блокировка",lx=985,ly=750))
-    a.append(arrow(835,650,835,475,label="завершить блокировку",lx=725,ly=560))
+    a.append(arrow(1135,675,840,675,label="ручная / Windows-блокировка",lx=1010,ly=765))
+    a.append(arrow(835,650,835,475,label="завершить блокировку",lx=690,ly=560))
     # states
     a.append('<circle cx="70" cy="425" r="16" fill="#26364a"/>')
     a.append(state_box(205,385,205,80,["NotCreated"]))
