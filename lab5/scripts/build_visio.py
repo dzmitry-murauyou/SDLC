@@ -280,8 +280,10 @@ def add_svg_element(page, templates, element, scale, origin_x, top_y, view_w, vi
     if tag == "rect":
         x, y = read_float(element, "x"), read_float(element, "y")
         w, h = read_float(element, "width"), read_float(element, "height")
+        if element.attrib.get("width", "").endswith("%") or element.attrib.get("height", "").endswith("%"):
+            return  # SVG page-sized background is represented by the white Visio page
         if x == 0 and y == 0 and w >= view_w and h >= view_h:
-            return  # the white SVG page background is the Visio page itself
+            return
         a = map_point(x, y, scale, origin_x, top_y)
         b = map_point(x+w, y+h, scale, origin_x, top_y)
         line_weight = max(read_float(element, "stroke-width", 1.2) * scale, 0.005)
@@ -378,7 +380,7 @@ def build_one(name, title, orientation, code):
     output = OUT / f"{name}-A3.vsdx"
     svg_path = DIAGRAM_DIR / f"{name}.svg"
     root = ET.parse(svg_path).getroot()
-    view_w, view_h = (float(v) for v in root.attrib["viewBox"].split()[2:])
+    view_x, view_y, view_w, view_h = (float(v) for v in root.attrib["viewBox"].split())
 
     with VisioFile(str(MEDIA_TEMPLATE)) as vis:
         page = vis.pages[0]
@@ -404,8 +406,8 @@ def build_one(name, title, orientation, code):
         area_w, area_h = right_mm-left_mm, top_mm-bottom_mm
         scale_mm = min(area_w/view_w, area_h/view_h)
         content_w, content_h = view_w*scale_mm, view_h*scale_mm
-        origin_x = mm(left_mm + (area_w-content_w)/2)
-        top_y = mm(top_mm - (area_h-content_h)/2)
+        origin_x = mm(left_mm + (area_w-content_w)/2 - view_x*scale_mm)
+        top_y = mm(top_mm - (area_h-content_h)/2 + view_y*scale_mm)
         scale = mm(scale_mm)
         for element in list(root):
             add_svg_element(page, templates, element, scale, origin_x, top_y, view_w, view_h)
