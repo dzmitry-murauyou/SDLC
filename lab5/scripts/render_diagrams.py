@@ -133,7 +133,7 @@ def diagram_activity():
         a.append(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" fill="#fbfcfe" stroke="#b7c2cf" stroke-width="1.4"/>')
         a.append(text((x1+x2)/2,118,label,18,weight="700",fill="#26364a"))
     nodes=[
-      ('start',160,150,50,30,[]),
+      ('start',185,150,50,30,[]),
       ('action',85,220,250,70,['Запустить Guardian']),
       ('action',85,335,250,82,['Ввести мастер-пароль']),
       ('action',585,455,310,82,['Проверить мастер-пароль']),
@@ -146,17 +146,17 @@ def diagram_activity():
       ('action',85,1380,250,82,['Явно запросить','просмотр / копирование']),
       ('action',585,1380,310,82,['Временно показать','или скопировать секрет']),
       ('action',85,1540,250,82,['Запросить блокировку','или заблокировать Windows']),
-      ('action',585,1660,310,90,['Скрыть секреты; очистить','clipboard, если возможно']),
-      ('end',625,1830,50,35,[]),
+      ('action',585,1540,310,82,['Скрыть секреты; очистить','clipboard, если возможно']),
+      ('end',715,1830,50,35,[]),
       ('action',85,1080,250,82,['Оставить Locked;','нейтральная ошибка'],'#fff3f0'),
-      ('end',160,1200,50,35,[]),
+      ('end',185,1200,50,35,[]),
     ]
     for nd in nodes:
         typ,x,y,ww,hh,lab,*rest=nd
         fill=rest[0] if rest else '#f4f8fc'
         a.append(node(x,y,ww,hh,lab,typ,fill))
     # Orthogonal connectors keep the paths aligned with the activity lanes.
-    a.append(orth_arrow([(185,180),(185,200),(210,200),(210,220)]))
+    a.append(orth_arrow([(210,180),(210,220)]))
     a.append(orth_arrow([(210,290),(210,335)]))
     a.append(orth_arrow([(335,376),(450,376),(450,496),(585,496)]))
     a.append(orth_arrow([(740,537),(740,575)]))
@@ -165,13 +165,13 @@ def diagram_activity():
     a.append(orth_arrow([(740,907),(740,945)]))
     a.append(orth_arrow([(740,1060),(740,1100)],'да',780,1080))
     a.append(orth_arrow([(630,1002),(500,1002),(500,1121),(335,1121)],'нет',460,1035))
-    a.append(orth_arrow([(210,1162),(210,1180),(185,1180),(185,1200)]))
+    a.append(orth_arrow([(210,1162),(210,1200)]))
     a.append(orth_arrow([(585,1141),(450,1141),(450,1311),(335,1311)]))
     a.append(orth_arrow([(210,1352),(210,1380)]))
     a.append(orth_arrow([(335,1421),(585,1421)]))
     a.append(orth_arrow([(585,1421),(450,1421),(450,1581),(335,1581)]))
-    a.append(orth_arrow([(210,1622),(450,1622),(450,1705),(585,1705)]))
-    a.append(orth_arrow([(740,1750),(740,1790),(650,1790),(650,1830)]))
+    a.append(orth_arrow([(335,1581),(585,1581)]))
+    a.append(orth_arrow([(740,1622),(740,1830)]))
     a.append('</svg>')
     return ''.join(a)
 
@@ -230,21 +230,21 @@ def diagram_sequence():
     xs=[145,430,715,1000,1285,1570]
     names=[['Пользователь'],['Guardian UI'],['VaultService'],['FIDO2Adapter'],['USB-ключ'],['CryptoProvider /','VaultStore']]
     for x,n in zip(xs,names):a.append(participant(x,n,bottom=1095))
-    for x,y1,y2 in [(430,270,1060),(715,300,1040),(1000,410,720),(1285,490,650),(1570,790,875)]:
+    for x,y1,y2 in [(430,270,1060),(715,300,1040),(1000,410,755),(1285,490,680),(1570,790,875)]:
         a.append(f'<rect x="{x-7}" y="{y1}" width="14" height="{y2-y1}" fill="#dbe8f4" stroke="#315f8e" stroke-width="1.2"/>')
     messages=[
       (145,430,285,'1. Ввести мастер-пароль и нажать «Открыть»',False),
       (430,715,345,'2. unlock(masterPassword)',False),
       (715,715,390,'3. verifyMaster(password)',False),
-      (715,1000,435,'4. requestAssertion(challenge)',False),
-      (1000,1285,490,'5. challenge',False),
-      (145,1285,545,'6. Подтвердить касанием (если запрошено)',False),
-      (1285,1000,600,'7. signedAssertion',True),
-      (1000,715,655,'8. assertionValid',True),
+      (715,1000,465,'4. requestAssertion(challenge)',False),
+      (1000,1285,520,'5. challenge',False),
+      (145,1285,575,'6. Подтвердить касанием (если запрошено)',False),
+      (1285,1000,630,'7. signedAssertion',True),
+      (1000,715,685,'8. assertionValid',True),
     ]
     for x1,x2,y,label,reply in messages:
         if x1==x2:
-            a.append(f'<path d="M {x1} {y} h 70 v 38 h -60" fill="none" stroke="#26364a" stroke-width="1.7" marker-end="url(#arrow)"/>'+text(x1+42,y-8,label,14))
+            a.append(f'<path d="M {x1} {y} h 55 v 22 h -45" fill="none" stroke="#26364a" stroke-width="1.7" marker-end="url(#arrow)"/>'+text(x1+34,y-8,label,14))
         else:a.append(msg(x1,x2,y,label,reply))
     a.append('<rect x="650" y="735" width="1020" height="340" rx="12" fill="#fff" fill-opacity="0.25" stroke="#68778a" stroke-width="1.6"/>')
     a.append('<path d="M 650 775 L 1670 775" stroke="#68778a" stroke-width="1.2"/>')
