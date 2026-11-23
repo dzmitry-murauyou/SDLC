@@ -202,9 +202,9 @@ def diagram_state():
     a.append('<path d="M 610 385 L 610 280 L 300 280 L 300 385" fill="none" stroke="#68778a" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#openArrow)"/>')
     a.append(text(455,238,"отмена / ошибка настройки",15,fill="#566579"))
     # terminal marker
-    a.append('<path d="M 835 475 L 560 475 L 560 810 L 670 810" fill="none" stroke="#26364a" stroke-width="1.8" marker-end="url(#arrow)"/>')
+    a.append('<path d="M 835 475 L 500 475 L 500 810 L 680 810" fill="none" stroke="#26364a" stroke-width="1.8" marker-end="url(#arrow)"/>')
     a.append('<circle cx="700" cy="810" r="17" fill="#fff" stroke="#26364a" stroke-width="3"/><circle cx="700" cy="810" r="11" fill="#26364a"/>')
-    a.append(text(860,835,"выход приложения",15,fill="#566579"))
+    a.append(text(590,795,"выход приложения",15,fill="#566579"))
     a.append('</svg>')
     return ''.join(a)
 
