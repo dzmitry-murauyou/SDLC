@@ -106,12 +106,38 @@ def add_ellipse(page, templates, x0, y0, x1, y1, *, fill="#FFFFFF", stroke="#000
 
 
 def add_line(page, templates, x1, y1, x2, y2, *, weight=0.009, arrow=None, dashed=False, color="#000000"):
-    shape = templates["line"].copy(page)
+    """Add an editable freeform segment with correctly oriented endpoints.
+
+    The package's line helper flattens every segment to a horizontal geometry,
+    which detaches vertical and reversed arrow segments in Visio. A 2-D freeform
+    path avoids that limitation and keeps positive shape dimensions in all cases.
+    """
+    epsilon = 0.001
+    left, right = sorted((x1, x2))
+    bottom, top = sorted((y1, y2))
+    if right - left < epsilon:
+        left, right = (x1 - epsilon/2, x1 + epsilon/2)
+    if top - bottom < epsilon:
+        bottom, top = (y1 - epsilon/2, y1 + epsilon/2)
+
+    shape = templates["rect"].copy(page)
+    place(shape, left, bottom, right, top)
     shape.text = ""
-    shape.set_start_and_finish((x1, y1), (x2, y2))
-    shape.line_color = color
-    shape.line_weight = weight
+    style_shape(shape, stroke=color, fill="#FFFFFF", weight=weight,
+                no_fill=True, no_line=False)
     shape.set_cell_value("LinePattern", "2" if dashed else "1")
+
+    geometry = shape.xml.find(f'{NS}Section[@N="Geometry"]')
+    for row in list(geometry.findall(f'{NS}Row')):
+        geometry.remove(row)
+    for index, (kind, px, py) in enumerate((
+        ("MoveTo", x1-left, y1-bottom),
+        ("LineTo", x2-left, y2-bottom),
+    ), 1):
+        row = ET.SubElement(geometry, f'{NS}Row', {"T": kind, "IX": str(index)})
+        ET.SubElement(row, f'{NS}Cell', {"N": "X", "V": str(px)})
+        ET.SubElement(row, f'{NS}Cell', {"N": "Y", "V": str(py)})
+
     if arrow == "open":
         shape.end_arrow = "1"
     elif arrow:
