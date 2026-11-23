@@ -52,7 +52,7 @@ def actor(cx, cy, label, lines=()):
 def usecase_ellipse(cx, cy, rx, ry, label, optional=False):
     dash = ' stroke-dasharray="9 7"' if optional else ''
     stroke = '#b56a12' if optional else '#315f8e'
-    fill = '#fff8ed' if optional else '#f4f8fc'
+    fill = '#ffffff'
     return (f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="{fill}" stroke="{stroke}" stroke-width="2.4"{dash}/>' +
             lines_text(cx, cy-10, label, 16, 20, weight="600", fill="#17283b"))
 
@@ -98,12 +98,12 @@ def diagram_usecase():
 def node(x,y,w,h,label,kind='action',fill='#f4f8fc'):
     if kind=='decision':
         pts=f'{x+w/2},{y} {x+w},{y+h/2} {x+w/2},{y+h} {x},{y+h/2}'
-        return f'<polygon points="{pts}" fill="#fff8ed" stroke="#40536a" stroke-width="2.2"/>'+lines_text(x+w/2,y+h/2-4,label,16,19)
+        return f'<polygon points="{pts}" fill="#ffffff" stroke="#40536a" stroke-width="2.2"/>'+lines_text(x+w/2,y+h/2-4,label,16,19)
     if kind=='start':
         return f'<circle cx="{x+w/2}" cy="{y+h/2}" r="14" fill="#26364a"/>'
     if kind=='end':
         return f'<circle cx="{x+w/2}" cy="{y+h/2}" r="17" fill="#fff" stroke="#26364a" stroke-width="3"/><circle cx="{x+w/2}" cy="{y+h/2}" r="11" fill="#26364a"/>'
-    return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="14" fill="{fill}" stroke="#315f8e" stroke-width="2.2"/>'+lines_text(x+w/2,y+h/2-7,label,16,19)
+    return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="14" fill="#ffffff" stroke="#315f8e" stroke-width="2.2"/>'+lines_text(x+w/2,y+h/2-7,label,16,19)
 
 
 def arrow(x1,y1,x2,y2,label=None,lx=None,ly=None,dashed=False):
@@ -126,7 +126,7 @@ def diagram_activity():
     top,bottom=125,1885
     lanes=[(0,420,"Пользователь"),(420,1040,"Guardian"),(1040,1500,"USB-ключ FIDO2")]
     for x1,x2,label in lanes:
-        a.append(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" fill="#fbfcfe" stroke="#b7c2cf" stroke-width="1.4"/>')
+        a.append(f'<rect x="{x1}" y="{top}" width="{x2-x1}" height="{bottom-top}" fill="#ffffff" stroke="#b7c2cf" stroke-width="1.4"/>')
         a.append(text((x1+x2)/2,118,label,18,weight="700",fill="#26364a"))
     nodes=[
       ('start',185,150,50,30,[]),
@@ -173,7 +173,7 @@ def diagram_activity():
 
 
 def state_box(x,y,w,h,label,fill='#f4f8fc'):
-    return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="20" fill="{fill}" stroke="#315f8e" stroke-width="2.4"/>'+lines_text(x+w/2,y+h/2-7,label,18,22,weight="600")
+    return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="20" fill="#ffffff" stroke="#315f8e" stroke-width="2.4"/>'+lines_text(x+w/2,y+h/2-7,label,18,22,weight="600")
 
 
 def diagram_state():
@@ -207,7 +207,7 @@ def diagram_state():
 
 
 def participant(cx, name_lines, y=160, bottom=1125):
-    out=[f'<rect x="{cx-115}" y="{y}" width="230" height="72" rx="8" fill="#f4f8fc" stroke="#315f8e" stroke-width="2"/>',
+    out=[f'<rect x="{cx-115}" y="{y}" width="230" height="72" rx="8" fill="#ffffff" stroke="#315f8e" stroke-width="2"/>',
          lines_text(cx,y+29,name_lines,16,20,weight="700"),
          f'<line x1="{cx}" y1="{y+72}" x2="{cx}" y2="{bottom}" stroke="#8995a5" stroke-width="1.5" stroke-dasharray="7 6"/>']
     return ''.join(out)
@@ -225,7 +225,7 @@ def diagram_sequence():
     names=[['Пользователь'],['Guardian UI'],['VaultService'],['FIDO2Adapter'],['USB-ключ'],['CryptoProvider /','VaultStore']]
     for x,n in zip(xs,names):a.append(participant(x,n,bottom=1095))
     for x,y1,y2 in [(430,270,1060),(715,300,1040),(1000,410,755),(1285,490,680),(1570,790,875)]:
-        a.append(f'<rect x="{x-7}" y="{y1}" width="14" height="{y2-y1}" fill="#dbe8f4" stroke="#315f8e" stroke-width="1.2"/>')
+        a.append(f'<rect x="{x-7}" y="{y1}" width="14" height="{y2-y1}" fill="#ffffff" stroke="#315f8e" stroke-width="1.2"/>')
     messages=[
       (145,430,285,'1. Ввести мастер-пароль и нажать «Открыть»',False),
       (430,715,345,'2. unlock(masterPassword)',False),
@@ -240,7 +240,7 @@ def diagram_sequence():
         if x1==x2:
             a.append(f'<path d="M {x1} {y} h 55 v 22 h -45" fill="none" stroke="#26364a" stroke-width="1.7" marker-end="url(#arrow)"/>'+text(x1+34,y-8,label,14))
         else:a.append(msg(x1,x2,y,label,reply))
-    a.append('<rect x="650" y="735" width="1020" height="340" rx="12" fill="#fff" fill-opacity="0.25" stroke="#68778a" stroke-width="1.6"/>')
+    a.append('<rect x="650" y="735" width="1020" height="340" rx="12" fill="#ffffff" stroke="#68778a" stroke-width="1.6"/>')
     a.append('<path d="M 650 775 L 1670 775" stroke="#68778a" stroke-width="1.2"/>')
     a.append(text(700,763,"alt",16,anchor="start",weight="700",fill="#40536a"))
     a.append(text(810,763,"оба фактора корректны",15,anchor="start",fill="#40536a"))
