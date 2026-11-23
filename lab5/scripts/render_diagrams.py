@@ -188,8 +188,8 @@ def diagram_state():
     a.append(arrow(1040,425,1135,425,label="запрос разблокировки",lx=1090,ly=360))
     a.append(arrow(1245,475,1245,635,label="оба фактора верны",lx=1350,ly=560))
     a.append(arrow(1135,450,1040,450,label="ошибка / отмена",lx=1090,ly=510))
-    a.append(arrow(1135,675,805,675,label="ручная / Windows-блокировка",lx=1010,ly=765))
-    a.append(orth_arrow([(698,635),(698,525),(935,525),(935,475)],label="завершить блокировку",lx=830,ly=510))
+    a.append(arrow(1135,675,805,675,label="ручная / Windows-блокировка",lx=985,ly=650))
+    a.append(orth_arrow([(698,635),(698,525),(935,525),(935,475)],label="завершить блокировку",lx=800,ly=500))
     # states
     a.append('<circle cx="70" cy="425" r="16" fill="#26364a"/>')
     a.append(state_box(205,385,205,80,["NotCreated"]))
