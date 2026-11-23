@@ -68,11 +68,11 @@ def diagram_usecase():
         a.append(f'<path d="M 270 {cy} L 580 {cy}" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
     # External actors connect only to the use cases they participate in.
     for cy in (200,300):
-        a.append(f'<path d="M 1480 243 L 1450 243 L 1450 {cy} L 1120 {cy}" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
-    a.append('<path d="M 1480 503 L 1450 503 L 1450 800 L 1120 800" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
-    a.append('<path d="M 1480 803 L 1450 803 L 1450 1100 L 1120 1100" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
+        a.append(f'<path d="M 1590 243 L 1450 243 L 1450 {cy} L 1120 {cy}" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
+    a.append('<path d="M 1590 503 L 1450 503 L 1450 800 L 1120 800" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
+    a.append('<path d="M 1590 803 L 1450 803 L 1450 1100 L 1120 1100" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
     for cy in (900,1000):
-        a.append(f'<path d="M 1480 1033 L 1450 1033 L 1450 {cy} L 1120 {cy}" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
+        a.append(f'<path d="M 1590 1033 L 1450 1033 L 1450 {cy} L 1120 {cy}" fill="none" stroke="#8995a5" stroke-width="1.6"/>')
     cases=[
       (200,["UC-01 Создать хранилище и", "зарегистрировать первичный ключ"]),
       (300,["UC-02 Разблокировать хранилище"]),
@@ -87,10 +87,10 @@ def diagram_usecase():
     ]
     for cy,lab in cases:a.append(usecase_ellipse(850,cy,270,34,lab))
     a.append(actor(150,650,"Пользователь"))
-    a.append(actor(1510,240,"USB-ключ",["USB-ключ","FIDO2/WebAuthn"]))
-    a.append(actor(1510,500,"Браузер",["Утверждённый","браузер Windows"]))
-    a.append(actor(1510,800,"Windows"))
-    a.append(actor(1510,1030,"Файловая система",["Файловая система /","внешний накопитель"]))
+    a.append(actor(1620,240,"USB-ключ",["USB-ключ","FIDO2/WebAuthn"]))
+    a.append(actor(1620,500,"Браузер",["Утверждённый","браузер Windows"]))
+    a.append(actor(1620,800,"Windows"))
+    a.append(actor(1620,1030,"Файловая система",["Файловая система /","внешний накопитель"]))
     a.append('</svg>')
     return ''.join(a)
 
@@ -109,7 +109,10 @@ def node(x,y,w,h,label,kind='action',fill='#f4f8fc'):
 def arrow(x1,y1,x2,y2,label=None,lx=None,ly=None,dashed=False):
     dash=' stroke-dasharray="7 5"' if dashed else ''
     out=f'<path d="M {x1} {y1} L {x2} {y2}" fill="none" stroke="#26364a" stroke-width="2" marker-end="url(#arrow)"{dash}/>'
-    if label: out+=text(lx if lx is not None else (x1+x2)/2,ly if ly is not None else (y1+y2)/2-8,label,15,weight="600",fill="#40536a")
+    if label:
+        tx=lx if lx is not None else (x1+x2)/2
+        ty=ly if ly is not None else (y1+y2)/2-8
+        out+=f'<text x="{tx}" y="{ty}" text-anchor="middle" font-size="15px" font-weight="600" fill="#40536a" style="paint-order:stroke;stroke:#ffffff;stroke-width:6px;stroke-linejoin:round">{escape(label)}</text>'
     return out
 
 
@@ -184,8 +187,8 @@ def diagram_state():
     a.append(arrow(720,425,835,425,label="инициализация + ключ",lx=780,ly=360))
     a.append(arrow(1040,425,1135,425,label="запрос разблокировки",lx=1090,ly=360))
     a.append(arrow(1245,475,1245,635,label="оба фактора верны",lx=1350,ly=560))
-    a.append(arrow(1135,450,1040,450,label="ошибка / отмена",lx=1090,ly=495))
-    a.append(arrow(1135,675,840,675,label="ручная / Windows-блокировка",lx=985,ly=720))
+    a.append(arrow(1135,450,1040,450,label="ошибка / отмена",lx=1090,ly=510))
+    a.append(arrow(1135,675,840,675,label="ручная / Windows-блокировка",lx=985,ly=750))
     a.append(arrow(835,650,835,475,label="завершить блокировку",lx=725,ly=560))
     # states
     a.append('<circle cx="70" cy="425" r="16" fill="#26364a"/>')
