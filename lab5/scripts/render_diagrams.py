@@ -188,8 +188,8 @@ def diagram_state():
     a.append(arrow(1040,425,1135,425,label="запрос разблокировки",lx=1090,ly=360))
     a.append(arrow(1245,475,1245,635,label="оба фактора верны",lx=1350,ly=560))
     a.append(arrow(1135,450,1040,450,label="ошибка / отмена",lx=1090,ly=510))
-    a.append(arrow(1135,675,840,675,label="ручная / Windows-блокировка",lx=1010,ly=765))
-    a.append(arrow(835,650,835,475,label="завершить блокировку",lx=690,ly=560))
+    a.append(arrow(1135,675,805,675,label="ручная / Windows-блокировка",lx=1010,ly=765))
+    a.append(orth_arrow([(698,635),(698,525),(935,525),(935,475)],label="завершить блокировку",lx=830,ly=510))
     # states
     a.append('<circle cx="70" cy="425" r="16" fill="#26364a"/>')
     a.append(state_box(205,385,205,80,["NotCreated"]))
@@ -197,7 +197,7 @@ def diagram_state():
     a.append(state_box(835,385,205,90,["Locked"], '#eef4fa'))
     a.append(state_box(1135,385,220,90,["Authenticating"], '#fff8ed'))
     a.append(state_box(1135,635,220,90,["Unlocked"], '#eef8f0'))
-    a.append(state_box(625,635,215,90,["Locking"], '#f4f8fc'))
+    a.append(state_box(590,635,215,90,["Locking"], '#f4f8fc'))
     # setup cancellation link
     a.append('<path d="M 610 385 L 610 280 L 300 280 L 300 385" fill="none" stroke="#68778a" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#openArrow)"/>')
     a.append(text(455,238,"отмена / ошибка настройки",15,fill="#566579"))
